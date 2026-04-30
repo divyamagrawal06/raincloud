@@ -42,6 +42,7 @@ flowchart LR
   Queue --> Worker
   Worker --> Runtime
   Runtime --> External
+  Mobile -->|"uploads via signed URL"| Files
   Worker --> Files
   Worker --> API
   API --> Push
@@ -76,6 +77,9 @@ stateDiagram-v2
   planning --> failed: worker cannot prepare
   running --> needs_input: worker requests bounded input
   needs_input --> running: user answers via API
+  needs_input --> plan_review: material scope change
+  needs_input --> failed: input expires or run times out
+  needs_input --> canceled: user cancels
   running --> succeeded: worker completes
   running --> failed: worker fails
   queued --> canceled: API cancels before start
@@ -87,6 +91,8 @@ stateDiagram-v2
 The API is the only component that can change canonical task state. The planner proposes plans; the worker reports run events; the mobile app requests transitions through authenticated API calls.
 
 The `planning` lifecycle state means worker-side preparation after approval, such as validating scoped inputs or setting up the runtime. It is distinct from the preflight planner that creates the user-approved plan.
+
+The `needs_input` state must have an expiry. If the user does not answer before the configured timeout, the API marks the run failed with a useful blocker summary. If the answer changes material scope, the task returns to `plan_review` with a new plan revision before any further execution.
 
 ## Cross-Boundary Contracts
 
