@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 1,
+  "id": "task-research-packet-001",
+  "title": "React Native State Management Recommendation",
+  "lane": "deep_research_packet",
+  "status": "succeeded",
+  "createdAt": "2026-04-30T22:14:00Z",
+  "prompt": {
+    "source": "mobile_composer",
+    "text": "Research the best state management library for a small React Native hackathon app and recommend one. Keep it useful for a team deciding tonight.",
+    "attachments": []
+  },
+  "clarifyingQuestions": [
+    {
+      "id": "cq_report_depth",
+      "question": "Do you want a concise recommendation, a detailed comparison, or an exportable report?",
+      "answer": "Concise recommendation with enough detail to defend the choice, plus Markdown export.",
+      "required": true,
+      "reason": "Report depth changes the number of sources, runtime, and output format."
+    }
+  ],
+  "approvedPlan": {
+    "version": 1,
+    "approvedAt": "2026-04-30T22:16:27Z",
+    "approvalState": "approved",
+    "clarifiedGoal": "Produce a cited, mobile-readable recommendation for React Native state management in a small hackathon app, with an exportable Markdown brief.",
+    "recipe": "deep_research_packet",
+    "runtime": "azure_container_job:research-worker",
+    "inputs": [
+      "Research question: best state management library for small React Native hackathon app",
+      "Output preference: concise recommendation with Markdown export"
+    ],
+    "permissions": [
+      "Search and read public web documentation",
+      "Write Markdown brief artifact"
+    ],
+    "steps": [
+      "Collect current documentation and package signals for candidate libraries.",
+      "Compare setup time, React Native compatibility, learning curve, persistence options, and team maintainability.",
+      "Prefer official docs and reputable package metadata over blog-only opinions.",
+      "Write a concise recommendation with tradeoffs and when to choose alternatives.",
+      "Export a Markdown brief with cited source list."
+    ],
+    "expectedOutputs": [
+      "Recommendation summary",
+      "Comparison table",
+      "Cited Markdown brief"
+    ],
+    "estimates": {
+      "runtimeMinutes": 7,
+      "credits": 4,
+      "externalApiCostUsd": 0.02
+    },
+    "limits": {
+      "maxSources": 8,
+      "maxRuntimeMinutes": 12,
+      "maxCredits": 6,
+      "maxReportWords": 1200
+    },
+    "externalApiUsage": [
+      {
+        "provider": "web_search",
+        "purpose": "Find official docs and package metadata",
+        "spendCapUsd": 0.05
+      }
+    ],
+    "assumptions": [
+      "The app is small enough that Redux-style ceremony is not required.",
+      "The team values quick setup and readable code over enterprise patterns.",
+      "Server cache state is not the main problem being solved."
+    ],
+    "risks": [
+      "Library popularity and package health can change over time.",
+      "Recommendation may differ if the app already uses a specific data-fetching cache."
+    ]
+  },
+  "workerRun": {
+    "id": "run_research_packet_001",
+    "status": "succeeded",
+    "startedAt": "2026-04-30T22:16:52Z",
+    "completedAt": "2026-04-30T22:22:38Z",
+    "milestones": [
+      {
+        "at": "2026-04-30T22:17:24Z",
+        "status": "running",
+        "message": "Collected official docs and package metadata for Zustand, Redux Toolkit, Jotai, and React Context."
+      },
+      {
+        "at": "2026-04-30T22:19:11Z",
+        "status": "running",
+        "message": "Compared setup effort, mobile fit, persistence, and team learning curve."
+      },
+      {
+        "at": "2026-04-30T22:21:52Z",
+        "status": "running",
+        "message": "Drafted and exported the cited Markdown recommendation."
+      }
+    ]
+  },
+  "result": {
+    "summary": "Recommended Zustand for the hackathon app because it is fast to adopt, lightweight, easy to read in small teams, and works cleanly in React Native without Redux boilerplate.",
+    "recommendation": {
+      "winner": "Zustand",
+      "why": [
+        "Minimal setup and low ceremony for a small app.",
+        "Works with React Native components without provider nesting.",
+        "Easy to pair with AsyncStorage persistence for simple preferences.",
+        "Small enough that hackathon teammates can understand it quickly."
+      ],
+      "whenToChooseSomethingElse": [
+        "Use Redux Toolkit if the app already has complex event flows, strict debugging requirements, or a team familiar with Redux.",
+        "Use React Context only for very small global values like theme or auth session.",
+        "Use Jotai if the team prefers atom-based composition and has time to learn the mental model."
+      ]
+    },
+    "sources": [
+      {
+        "title": "Zustand documentation",
+        "url": "https://zustand.docs.pmnd.rs/",
+        "accessedAt": "2026-04-30T22:18:00Z"
+      },
+      {
+        "title": "Redux Toolkit documentation",
+        "url": "https://redux-toolkit.js.org/",
+        "accessedAt": "2026-04-30T22:18:21Z"
+      },
+      {
+        "title": "Jotai documentation",
+        "url": "https://jotai.org/",
+        "accessedAt": "2026-04-30T22:18:46Z"
+      },
+      {
+        "title": "React documentation: Passing Data Deeply with Context",
+        "url": "https://react.dev/learn/passing-data-deeply-with-context",
+        "accessedAt": "2026-04-30T22:19:03Z"
+      }
+    ],
+    "artifacts": [
+      {
+        "id": "art_research_brief",
+        "kind": "report",
+        "name": "react-native-state-management-recommendation.md",
+        "mimeType": "text/markdown",
+        "sizeBytes": 6422,
+        "retentionDays": 7
+      }
+    ],
+    "usage": {
+      "actualRuntimeSeconds": 346,
+      "creditsCharged": 4,
+      "externalApiCostUsd": 0.02
+    },
+    "followUpSuggestions": [
+      "Ask Raincloud to generate a starter Zustand store for the app.",
+      "Re-run this research before production if the library decision becomes long-term architecture."
+    ]
+  }
+}

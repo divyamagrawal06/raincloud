@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "id": "task-audiobook-sample-001",
+  "title": "Warm Audiobook Sample From Chapter Excerpt",
+  "lane": "audio_audiobook_generation",
+  "status": "succeeded",
+  "createdAt": "2026-04-30T18:10:00Z",
+  "prompt": {
+    "source": "mobile_composer",
+    "text": "Turn this chapter excerpt into a calm audiobook sample with a warm narrator voice. Keep it short and send me an MP3.",
+    "attachments": [
+      {
+        "id": "att_chapter_excerpt_pdf",
+        "name": "chapter-03-sample.pdf",
+        "kind": "pdf",
+        "mimeType": "application/pdf",
+        "sizeBytes": 742118,
+        "summary": "Seven-page public-domain fiction excerpt, roughly 1,840 words."
+      }
+    ]
+  },
+  "clarifyingQuestions": [
+    {
+      "id": "cq_voice_accent",
+      "question": "Should the narrator use neutral US English, neutral Indian English, or a British audiobook style?",
+      "answer": "Neutral US English, warm but not dramatic.",
+      "required": true,
+      "reason": "Voice selection changes the external audio generation request and credit estimate."
+    }
+  ],
+  "approvedPlan": {
+    "version": 1,
+    "approvedAt": "2026-04-30T18:12:44Z",
+    "approvalState": "approved",
+    "clarifiedGoal": "Generate a short MP3 audiobook sample from the uploaded excerpt using a warm neutral-US narrator voice.",
+    "recipe": "audiobook_sample",
+    "runtime": "azure_container_job:media-worker",
+    "inputs": [
+      "chapter-03-sample.pdf",
+      "Voice preference: warm neutral-US narrator",
+      "Output format: MP3"
+    ],
+    "permissions": [
+      "Read uploaded PDF",
+      "Write generated audio and metadata artifacts",
+      "Call approved text-to-speech API within spend cap"
+    ],
+    "steps": [
+      "Extract text from the uploaded PDF and remove headers, page numbers, and repeated footers.",
+      "Select the first complete passage that fits the sample length cap.",
+      "Generate audio with the approved narrator voice settings.",
+      "Normalize loudness and export an MP3 preview.",
+      "Create transcript and metadata JSON with voice settings, duration, and usage.",
+      "Upload artifacts and notify the user when ready."
+    ],
+    "expectedOutputs": [
+      "MP3 audiobook sample",
+      "Plain-text transcript",
+      "Voice and usage metadata"
+    ],
+    "estimates": {
+      "runtimeMinutes": 4,
+      "credits": 6,
+      "externalApiCostUsd": 0.18
+    },
+    "limits": {
+      "maxInputWords": 2500,
+      "maxGeneratedAudioMinutes": 4,
+      "maxRuntimeMinutes": 10,
+      "maxCredits": 8
+    },
+    "externalApiUsage": [
+      {
+        "provider": "text_to_speech",
+        "purpose": "Generate narrated sample audio",
+        "spendCapUsd": 0.25
+      }
+    ],
+    "assumptions": [
+      "The uploaded excerpt is user-owned or public-domain text.",
+      "A short sample is enough; this job will not convert the full book.",
+      "MP3 at 128 kbps is acceptable for mobile preview."
+    ],
+    "risks": [
+      "PDF extraction may include stray page furniture if the source scan is noisy.",
+      "Text-to-speech pronunciation may need a later pronunciation pass for names."
+    ]
+  },
+  "workerRun": {
+    "id": "run_audiobook_001",
+    "status": "succeeded",
+    "startedAt": "2026-04-30T18:13:03Z",
+    "completedAt": "2026-04-30T18:16:31Z",
+    "milestones": [
+      {
+        "at": "2026-04-30T18:13:18Z",
+        "status": "running",
+        "message": "Extracted 1,812 usable words from the uploaded PDF."
+      },
+      {
+        "at": "2026-04-30T18:14:49Z",
+        "status": "running",
+        "message": "Generated narration preview with the approved voice settings."
+      },
+      {
+        "at": "2026-04-30T18:16:12Z",
+        "status": "running",
+        "message": "Normalized audio and uploaded the MP3 artifact."
+      }
+    ]
+  },
+  "result": {
+    "summary": "Created a 3 minute 42 second warm narrator audiobook sample from the uploaded chapter excerpt.",
+    "artifacts": [
+      {
+        "id": "art_audiobook_mp3",
+        "kind": "audio",
+        "name": "chapter-03-audiobook-sample.mp3",
+        "mimeType": "audio/mpeg",
+        "sizeBytes": 3562041,
+        "retentionDays": 7
+      },
+      {
+        "id": "art_audiobook_transcript",
+        "kind": "transcript",
+        "name": "chapter-03-audiobook-transcript.txt",
+        "mimeType": "text/plain",
+        "sizeBytes": 10484,
+        "retentionDays": 7
+      },
+      {
+        "id": "art_audiobook_metadata",
+        "kind": "metadata",
+        "name": "chapter-03-audiobook-metadata.json",
+        "mimeType": "application/json",
+        "sizeBytes": 1832,
+        "retentionDays": 7
+      }
+    ],
+    "usage": {
+      "actualRuntimeSeconds": 208,
+      "creditsCharged": 6,
+      "externalApiCostUsd": 0.17
+    },
+    "followUpSuggestions": [
+      "Approve a pronunciation pass for character names.",
+      "Generate a second sample with a more dramatic delivery."
+    ]
+  }
+}

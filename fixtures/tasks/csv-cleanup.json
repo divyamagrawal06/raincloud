@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "id": "task-csv-cleanup-001",
+  "title": "Clean Hackathon Signup CSV",
+  "lane": "csv_cleanup_analysis",
+  "status": "succeeded",
+  "createdAt": "2026-04-30T19:04:00Z",
+  "prompt": {
+    "source": "mobile_composer",
+    "text": "Clean this signup CSV, dedupe people, normalize phone numbers and dates, separate invalid rows, and give me a summary of what changed.",
+    "attachments": [
+      {
+        "id": "att_messy_signups_csv",
+        "name": "spring-hackathon-signups.csv",
+        "kind": "csv",
+        "mimeType": "text/csv",
+        "sizeBytes": 1298840,
+        "summary": "12,884 signup rows with mixed date formats, duplicate emails, inconsistent phone numbers, and missing consent values."
+      }
+    ]
+  },
+  "clarifyingQuestions": [
+    {
+      "id": "cq_duplicate_policy",
+      "question": "When duplicate people disagree, should I keep the newest row, the most complete row, or split conflicts into review?",
+      "answer": "Keep the most complete row, but put conflicting duplicates in the rejected rows file.",
+      "required": true,
+      "reason": "Deduplication policy changes the cleaned CSV and rejected-row report."
+    }
+  ],
+  "approvedPlan": {
+    "version": 1,
+    "approvedAt": "2026-04-30T19:06:21Z",
+    "approvalState": "approved",
+    "clarifiedGoal": "Return a cleaned signup CSV, a rejected rows CSV, and a validation report describing normalization and data-quality issues.",
+    "recipe": "csv_cleanup",
+    "runtime": "azure_container_job:data-worker",
+    "inputs": [
+      "spring-hackathon-signups.csv",
+      "Duplicate policy: keep most complete row, reject unresolved conflicts"
+    ],
+    "permissions": [
+      "Read uploaded CSV",
+      "Write cleaned CSV, rejected rows CSV, and report artifacts"
+    ],
+    "steps": [
+      "Profile headers, row count, nulls, and obvious type issues.",
+      "Normalize email casing, phone numbers, state names, dates, and consent values.",
+      "Detect duplicates using email, normalized phone, and fuzzy full-name plus school matching.",
+      "Keep the most complete row in each duplicate cluster unless fields conflict materially.",
+      "Write rejected rows with reason codes for missing required fields and unresolved conflicts.",
+      "Generate a validation report with before-and-after counts and recommended follow-up."
+    ],
+    "expectedOutputs": [
+      "Cleaned CSV",
+      "Rejected rows CSV",
+      "Markdown validation report"
+    ],
+    "estimates": {
+      "runtimeMinutes": 3,
+      "credits": 3,
+      "externalApiCostUsd": 0
+    },
+    "limits": {
+      "maxRows": 50000,
+      "maxFileSizeMb": 10,
+      "maxRuntimeMinutes": 8,
+      "maxCredits": 5
+    },
+    "externalApiUsage": [],
+    "assumptions": [
+      "Email is the strongest unique identifier when present.",
+      "Phone normalization should use US and India country-code defaults only.",
+      "Rows missing both email and phone should be rejected."
+    ],
+    "risks": [
+      "Fuzzy duplicate matching can over-merge common student names.",
+      "Phone numbers without a country code may be ambiguous."
+    ]
+  },
+  "workerRun": {
+    "id": "run_csv_cleanup_001",
+    "status": "succeeded",
+    "startedAt": "2026-04-30T19:06:49Z",
+    "completedAt": "2026-04-30T19:09:16Z",
+    "milestones": [
+      {
+        "at": "2026-04-30T19:07:10Z",
+        "status": "running",
+        "message": "Profiled 12,884 rows and 18 columns."
+      },
+      {
+        "at": "2026-04-30T19:08:04Z",
+        "status": "running",
+        "message": "Normalized dates, emails, phones, schools, and consent values."
+      },
+      {
+        "at": "2026-04-30T19:08:47Z",
+        "status": "running",
+        "message": "Resolved duplicate clusters and separated invalid rows."
+      }
+    ]
+  },
+  "result": {
+    "summary": "Cleaned the signup dataset from 12,884 raw rows to 11,632 usable participant rows and separated 348 rows for manual review.",
+    "metrics": {
+      "inputRows": 12884,
+      "cleanRows": 11632,
+      "duplicateRowsRemoved": 904,
+      "rejectedRows": 348,
+      "normalizedPhoneValues": 9714,
+      "normalizedDateValues": 12601
+    },
+    "artifacts": [
+      {
+        "id": "art_cleaned_csv",
+        "kind": "csv",
+        "name": "spring-hackathon-signups-clean.csv",
+        "mimeType": "text/csv",
+        "sizeBytes": 1083772,
+        "retentionDays": 7
+      },
+      {
+        "id": "art_rejected_csv",
+        "kind": "csv",
+        "name": "spring-hackathon-signups-rejected.csv",
+        "mimeType": "text/csv",
+        "sizeBytes": 68421,
+        "retentionDays": 7
+      },
+      {
+        "id": "art_validation_report",
+        "kind": "report",
+        "name": "spring-hackathon-signups-validation.md",
+        "mimeType": "text/markdown",
+        "sizeBytes": 7428,
+        "retentionDays": 7
+      }
+    ],
+    "usage": {
+      "actualRuntimeSeconds": 147,
+      "creditsCharged": 3,
+      "externalApiCostUsd": 0
+    },
+    "followUpSuggestions": [
+      "Review 91 conflicting duplicate clusters before importing into CRM.",
+      "Add required field validation to the signup form."
+    ]
+  }
+}
