@@ -92,7 +92,7 @@
       },
       {
         "at": "2026-04-30T22:21:52Z",
-        "status": "running",
+        "status": "succeeded",
         "message": "Drafted and exported the cited Markdown recommendation."
       }
     ]

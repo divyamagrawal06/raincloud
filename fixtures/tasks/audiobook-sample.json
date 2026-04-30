@@ -104,7 +104,7 @@
       },
       {
         "at": "2026-04-30T18:16:12Z",
-        "status": "running",
+        "status": "succeeded",
         "message": "Normalized audio and uploaded the MP3 artifact."
       }
     ]

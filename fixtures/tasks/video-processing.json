@@ -99,7 +99,7 @@
       },
       {
         "at": "2026-04-30T20:24:46Z",
-        "status": "running",
+        "status": "succeeded",
         "message": "Encoded compressed MP4 with burned-in captions."
       }
     ]
