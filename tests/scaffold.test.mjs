@@ -22,7 +22,9 @@ test("mobile package is an Expo app workspace", () => {
   assert.equal(pkg.scripts.start, "expo start");
   assert.ok(pkg.dependencies.expo);
   assert.ok(pkg.dependencies.react);
+  assert.ok(pkg.dependencies["react-dom"]);
   assert.ok(pkg.dependencies["react-native"]);
+  assert.ok(pkg.dependencies["react-native-web"]);
   assert.ok(pkg.devDependencies.typescript);
 });
 
