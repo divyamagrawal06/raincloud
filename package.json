@@ -1,0 +1,17 @@
+{
+  "name": "raincloud",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "start:mobile": "npm --workspace @raincloud/mobile run start",
+    "android:mobile": "npm --workspace @raincloud/mobile run android",
+    "ios:mobile": "npm --workspace @raincloud/mobile run ios",
+    "web:mobile": "npm --workspace @raincloud/mobile run web"
+  }
+}
