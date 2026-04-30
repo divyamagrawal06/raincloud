@@ -4,8 +4,10 @@ import assert from "node:assert/strict";
 import {
   artifactKinds,
   isTerminalTaskStatus,
+  isTerminalWorkerRunStatus,
   taskLanes,
   taskStatuses,
+  terminalWorkerRunStatuses,
   workerRunStatuses,
 } from "../packages/domain/dist/index.js";
 
@@ -28,6 +30,10 @@ test("domain exports the agreed task lifecycle", () => {
   assert.equal(isTerminalTaskStatus("succeeded"), true);
   assert.equal(isTerminalTaskStatus("failed"), true);
   assert.equal(isTerminalTaskStatus("canceled"), true);
+
+  const databaseStatus = "succeeded";
+  assert.equal(isTerminalTaskStatus(databaseStatus), true);
+  assert.equal(isTerminalTaskStatus("unknown_status"), false);
 });
 
 test("domain exports first MVP task lanes", () => {
@@ -60,4 +66,15 @@ test("domain exports artifact and worker run contracts", () => {
     "failed",
     "canceled",
   ]);
+
+  assert.deepEqual(terminalWorkerRunStatuses, [
+    "succeeded",
+    "failed",
+    "canceled",
+  ]);
+
+  const databaseRunStatus = "failed";
+  assert.equal(isTerminalWorkerRunStatus(databaseRunStatus), true);
+  assert.equal(isTerminalWorkerRunStatus("running"), false);
+  assert.equal(isTerminalWorkerRunStatus("unknown_status"), false);
 });

@@ -24,8 +24,9 @@ export type TerminalTaskStatus = (typeof terminalTaskStatuses)[number];
 const terminalTaskStatusSet = new Set<TaskStatus>(terminalTaskStatuses);
 
 export const isTerminalTaskStatus = (
-  status: TaskStatus,
-): status is TerminalTaskStatus => terminalTaskStatusSet.has(status);
+  status: string,
+): status is TerminalTaskStatus =>
+  terminalTaskStatusSet.has(status as TaskStatus);
 
 export const taskLanes = [
   "code_pr",
@@ -78,6 +79,24 @@ export const workerRunStatuses = [
 
 export type WorkerRunStatus = (typeof workerRunStatuses)[number];
 
+export const terminalWorkerRunStatuses = [
+  "succeeded",
+  "failed",
+  "canceled",
+] as const satisfies readonly WorkerRunStatus[];
+
+export type TerminalWorkerRunStatus =
+  (typeof terminalWorkerRunStatuses)[number];
+
+const terminalWorkerRunStatusSet = new Set<WorkerRunStatus>(
+  terminalWorkerRunStatuses,
+);
+
+export const isTerminalWorkerRunStatus = (
+  status: string,
+): status is TerminalWorkerRunStatus =>
+  terminalWorkerRunStatusSet.has(status as WorkerRunStatus);
+
 export type IsoDateTime = string;
 
 export interface Task {
@@ -116,16 +135,37 @@ export interface ExpectedArtifact {
   description: string;
 }
 
-export interface ClarifyingQuestion {
+export interface BaseClarifyingQuestion {
   id: string;
   taskId: string;
-  kind: ClarifyingQuestionKind;
   prompt: string;
   required: boolean;
-  options?: ClarifyingQuestionOption[];
-  answer?: string | string[];
   answeredAt?: IsoDateTime;
 }
+
+export interface ShortTextClarifyingQuestion extends BaseClarifyingQuestion {
+  kind: "short_text";
+  options?: never;
+  answer?: string;
+}
+
+export interface SingleSelectClarifyingQuestion
+  extends BaseClarifyingQuestion {
+  kind: "single_select";
+  options: ClarifyingQuestionOption[];
+  answer?: string;
+}
+
+export interface MultiSelectClarifyingQuestion extends BaseClarifyingQuestion {
+  kind: "multi_select";
+  options: ClarifyingQuestionOption[];
+  answer?: string[];
+}
+
+export type ClarifyingQuestion =
+  | ShortTextClarifyingQuestion
+  | SingleSelectClarifyingQuestion
+  | MultiSelectClarifyingQuestion;
 
 export interface ClarifyingQuestionOption {
   id: string;
@@ -166,6 +206,7 @@ export interface WorkerRun {
   taskId: string;
   planId: string;
   status: WorkerRunStatus;
+  createdAt: IsoDateTime;
   startedAt?: IsoDateTime;
   finishedAt?: IsoDateTime;
   failureReason?: string;
