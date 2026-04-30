@@ -36,6 +36,32 @@ The initial audience is student builders, hackathon teams, indie developers, and
 - [Hackathon plan](docs/hackathon-plan.md)
 - [MVP architecture decision](docs/decisions/0001-mobile-preflight-cloud-jobs.md)
 
+## Development
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run scaffold checks:
+
+```bash
+npm test
+```
+
+Run TypeScript checks:
+
+```bash
+npm run typecheck
+```
+
+Start the Expo mobile app:
+
+```bash
+npm run start:mobile
+```
+
 ## Repository Rules
 
 This repo follows the workflow in [AGENTS.md](AGENTS.md):
