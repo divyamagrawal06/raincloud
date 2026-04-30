@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Quality Gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run scaffold tests
+        run: npm test
+
+      - name: Run TypeScript checks
+        run: npm run typecheck
+
+      - name: Run Expo Doctor
+        working-directory: apps/mobile
+        run: npx expo-doctor
+
+      - name: Verify iOS bundle export
+        working-directory: apps/mobile
+        run: npx expo export --platform ios --output-dir .expo/ios-export-test
+
+      - name: Verify web bundle export
+        working-directory: apps/mobile
+        run: npx expo export --platform web --output-dir .expo/web-export-test
