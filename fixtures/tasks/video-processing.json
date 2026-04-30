@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 1,
+  "id": "task-video-processing-001",
+  "title": "Compress Pitch Video With Captions",
+  "lane": "video_processing",
+  "status": "succeeded",
+  "createdAt": "2026-04-30T20:18:00Z",
+  "prompt": {
+    "source": "mobile_composer",
+    "text": "Compress this campus pitch video for WhatsApp under 25 MB, keep it sharp if possible, and extract captions.",
+    "attachments": [
+      {
+        "id": "att_pitch_video",
+        "name": "raincloud-campus-pitch.mov",
+        "kind": "video",
+        "mimeType": "video/quicktime",
+        "sizeBytes": 184224390,
+        "summary": "92-second 1080p phone-recorded pitch clip with speech, room noise, and a whiteboard segment."
+      }
+    ]
+  },
+  "clarifyingQuestions": [
+    {
+      "id": "cq_caption_style",
+      "question": "Do you want captions burned into the video, a separate SRT file, or both?",
+      "answer": "Both. Burn in compact captions and include the SRT.",
+      "required": true,
+      "reason": "Caption style changes output artifacts and processing steps."
+    }
+  ],
+  "approvedPlan": {
+    "version": 1,
+    "approvedAt": "2026-04-30T20:20:09Z",
+    "approvalState": "approved",
+    "clarifiedGoal": "Create a WhatsApp-friendly MP4 under 25 MB with burned-in captions and a separate SRT file.",
+    "recipe": "video_compress_caption",
+    "runtime": "azure_container_job:media-worker",
+    "inputs": [
+      "raincloud-campus-pitch.mov",
+      "Target output size: under 25 MB",
+      "Caption output: burned-in captions plus SRT"
+    ],
+    "permissions": [
+      "Read uploaded video",
+      "Write processed video, SRT, and processing report",
+      "Run local media tooling inside worker"
+    ],
+    "steps": [
+      "Probe the video for duration, dimensions, audio tracks, and bitrate.",
+      "Transcribe speech and generate caption timings.",
+      "Encode an MP4 using H.264 video and AAC audio with a bitrate target under 25 MB.",
+      "Burn compact captions into the video while preserving the whiteboard area.",
+      "Export the SRT sidecar and a processing report.",
+      "Upload artifacts and notify the user."
+    ],
+    "expectedOutputs": [
+      "Compressed MP4 under 25 MB",
+      "SRT caption file",
+      "Processing report"
+    ],
+    "estimates": {
+      "runtimeMinutes": 6,
+      "credits": 5,
+      "externalApiCostUsd": 0
+    },
+    "limits": {
+      "maxInputDurationSeconds": 120,
+      "maxInputFileSizeMb": 250,
+      "maxOutputFileSizeMb": 25,
+      "maxRuntimeMinutes": 15,
+      "maxCredits": 7
+    },
+    "externalApiUsage": [],
+    "assumptions": [
+      "The video duration is below the MVP cap.",
+      "Some bitrate reduction is acceptable to meet the target file size.",
+      "English speech recognition is appropriate for the captions."
+    ],
+    "risks": [
+      "Noisy room audio may produce caption errors.",
+      "Fast camera movement may need more compression and reduce sharpness."
+    ]
+  },
+  "workerRun": {
+    "id": "run_video_processing_001",
+    "status": "succeeded",
+    "startedAt": "2026-04-30T20:20:41Z",
+    "completedAt": "2026-04-30T20:25:58Z",
+    "milestones": [
+      {
+        "at": "2026-04-30T20:21:02Z",
+        "status": "running",
+        "message": "Probed 92-second 1080p source video."
+      },
+      {
+        "at": "2026-04-30T20:22:20Z",
+        "status": "running",
+        "message": "Generated caption timings from the audio track."
+      },
+      {
+        "at": "2026-04-30T20:24:46Z",
+        "status": "succeeded",
+        "message": "Encoded compressed MP4 with burned-in captions."
+      }
+    ]
+  },
+  "result": {
+    "summary": "Compressed the 184 MB source video into a 23.4 MB MP4 with burned-in captions and an SRT sidecar.",
+    "metrics": {
+      "inputSizeBytes": 184224390,
+      "outputSizeBytes": 24536618,
+      "durationSeconds": 92,
+      "outputResolution": "1280x720",
+      "captionCues": 38
+    },
+    "artifacts": [
+      {
+        "id": "art_compressed_video",
+        "kind": "video",
+        "name": "raincloud-campus-pitch-whatsapp.mp4",
+        "mimeType": "video/mp4",
+        "sizeBytes": 24536618,
+        "retentionDays": 7
+      },
+      {
+        "id": "art_video_captions",
+        "kind": "captions",
+        "name": "raincloud-campus-pitch.srt",
+        "mimeType": "application/x-subrip",
+        "sizeBytes": 3922,
+        "retentionDays": 7
+      },
+      {
+        "id": "art_video_report",
+        "kind": "report",
+        "name": "raincloud-campus-pitch-processing.md",
+        "mimeType": "text/markdown",
+        "sizeBytes": 3098,
+        "retentionDays": 7
+      }
+    ],
+    "usage": {
+      "actualRuntimeSeconds": 317,
+      "creditsCharged": 5,
+      "externalApiCostUsd": 0
+    },
+    "followUpSuggestions": [
+      "Review captions before posting publicly.",
+      "Run a square crop pass if this will be posted to Instagram."
+    ]
+  }
+}

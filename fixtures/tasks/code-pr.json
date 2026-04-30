@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 1,
+  "id": "task-code-pr-001",
+  "title": "Add Dark Mode Toggle To Expo App",
+  "lane": "code_pr",
+  "status": "succeeded",
+  "createdAt": "2026-04-30T21:02:00Z",
+  "prompt": {
+    "source": "mobile_composer",
+    "text": "In my Expo app, add a dark mode toggle and make the dashboard cards use theme colors. Open a PR when it passes tests.",
+    "attachments": [],
+    "repository": {
+      "provider": "github",
+      "owner": "mira-campus",
+      "name": "rainboard",
+      "defaultBranch": "main",
+      "selectedByUser": true
+    }
+  },
+  "clarifyingQuestions": [
+    {
+      "id": "cq_theme_behavior",
+      "question": "Should the app follow the system theme, use a manual toggle, or support both?",
+      "answer": "Support both: default to system theme, then let the manual toggle override it.",
+      "required": true,
+      "reason": "Theme behavior changes app state, settings UI, and tests."
+    }
+  ],
+  "approvedPlan": {
+    "version": 1,
+    "approvedAt": "2026-04-30T21:04:35Z",
+    "approvalState": "approved",
+    "clarifiedGoal": "Create a GitHub branch and PR that adds theme-aware dashboard cards plus a persisted dark mode override in the Expo app.",
+    "recipe": "github_code_pr",
+    "runtime": "azure_container_job:code-worker",
+    "inputs": [
+      "GitHub repo: mira-campus/rainboard",
+      "Base branch: main",
+      "Theme behavior: system default plus manual override"
+    ],
+    "permissions": [
+      "Read selected GitHub repository",
+      "Create feature branch",
+      "Push commits to selected repository",
+      "Open pull request"
+    ],
+    "steps": [
+      "Clone the selected repository with scoped GitHub credentials.",
+      "Inspect the Expo app structure and existing styling patterns.",
+      "Add a theme state provider with system default and persisted manual override.",
+      "Add a settings toggle and update dashboard cards to read theme colors.",
+      "Run the repo test and typecheck commands.",
+      "Push a feature branch and open a PR with summary, files changed, and verification results."
+    ],
+    "expectedOutputs": [
+      "GitHub branch",
+      "Open pull request",
+      "Change summary",
+      "Test and typecheck status"
+    ],
+    "estimates": {
+      "runtimeMinutes": 12,
+      "credits": 9,
+      "externalApiCostUsd": 0
+    },
+    "limits": {
+      "maxRuntimeMinutes": 25,
+      "maxCredits": 12,
+      "maxFilesChanged": 8,
+      "allowedRepoScope": "selected_repository_only"
+    },
+    "externalApiUsage": [],
+    "assumptions": [
+      "The requested change is limited to UI theme behavior, not full design-system replacement.",
+      "Existing tests can run in the worker without secrets.",
+      "The repository permits branch creation with the connected GitHub token."
+    ],
+    "risks": [
+      "The repo may have missing local setup steps not documented in package scripts.",
+      "Snapshot tests may need updates if theme colors affect rendered output."
+    ]
+  },
+  "workerRun": {
+    "id": "run_code_pr_001",
+    "status": "succeeded",
+    "startedAt": "2026-04-30T21:05:02Z",
+    "completedAt": "2026-04-30T21:16:44Z",
+    "milestones": [
+      {
+        "at": "2026-04-30T21:05:36Z",
+        "status": "running",
+        "message": "Cloned mira-campus/rainboard and detected an Expo workspace."
+      },
+      {
+        "at": "2026-04-30T21:09:12Z",
+        "status": "running",
+        "message": "Added theme provider, settings toggle, and theme-aware dashboard card styles."
+      },
+      {
+        "at": "2026-04-30T21:13:58Z",
+        "status": "running",
+        "message": "npm test and npm run typecheck passed locally."
+      },
+      {
+        "at": "2026-04-30T21:16:19Z",
+        "status": "succeeded",
+        "message": "Pushed feature/mobile-theme-toggle and opened a pull request."
+      }
+    ]
+  },
+  "result": {
+    "summary": "Opened a PR that adds a system-aware dark mode toggle, persists manual preference, and updates dashboard cards to use theme tokens.",
+    "pullRequest": {
+      "url": "https://github.com/mira-campus/rainboard/pull/27",
+      "number": 27,
+      "branch": "feature/mobile-theme-toggle",
+      "base": "main",
+      "state": "open"
+    },
+    "filesChanged": [
+      "apps/mobile/src/theme/ThemeProvider.tsx",
+      "apps/mobile/src/screens/SettingsScreen.tsx",
+      "apps/mobile/src/screens/DashboardScreen.tsx",
+      "apps/mobile/src/components/DashboardCard.tsx",
+      "apps/mobile/src/theme/__tests__/ThemeProvider.test.tsx"
+    ],
+    "checks": [
+      {
+        "name": "npm test",
+        "status": "passed"
+      },
+      {
+        "name": "npm run typecheck",
+        "status": "passed"
+      }
+    ],
+    "artifacts": [
+      {
+        "id": "art_code_pr_summary",
+        "kind": "report",
+        "name": "dark-mode-pr-summary.md",
+        "mimeType": "text/markdown",
+        "sizeBytes": 2886,
+        "retentionDays": 14
+      }
+    ],
+    "usage": {
+      "actualRuntimeSeconds": 702,
+      "creditsCharged": 9,
+      "externalApiCostUsd": 0
+    },
+    "followUpSuggestions": [
+      "Wait for GitHub Actions before merging.",
+      "Ask Raincloud to add theme screenshots if reviewers request visual proof."
+    ]
+  }
+}
