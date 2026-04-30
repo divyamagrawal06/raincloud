@@ -1,6 +1,6 @@
 export const colors = {
   surface: '#10131b',
-  surfaceDim: '#10131b',
+  surfaceDim: '#10131b', // intentionally same as surface — the palette bottoms out at this value
   surfaceContainerLow: '#181c23',
   surfaceContainer: '#1c2028',
   surfaceContainerHigh: '#272a32',

@@ -2,14 +2,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ImageBackground, StyleSheet, View } from 'react-native';
 import { colors } from '../theme';
 
-const CLOUD_IMAGE =
-  'https://lh3.googleusercontent.com/aida-public/AB6AXuA8viE6gOu3omGtuuevNLK1iJCV90pqvD4V98VQO4TUJ0-ood2zTEz_vMXMBXPoBXrU3DpGuRPnrGtmHeyuYoks611A3lbasXTXOfJUnF3_92pASAGihUWV-B7MD0cV37l7Crh9SKbZ7xtDzDUSSbfP5Z-ZnIcWyiiZt74GhVWZw4c26Efed3DZl99mwrtSHHx7prrxH3xsm4bSSv7jK-k_hvYA90HyLnYt75g2Ebu9Oh5bXs5dNC0jXX78i_WfAvlWmmCFizV7nb0';
+const CLOUD_IMAGE = require('../../assets/cloud-bg.jpg');
 
 export function AtmosphericBackground() {
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
       <ImageBackground
-        source={{ uri: CLOUD_IMAGE }}
+        source={CLOUD_IMAGE}
         style={StyleSheet.absoluteFill}
         resizeMode="cover"
       />

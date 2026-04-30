@@ -12,7 +12,7 @@ import { HomeScreen } from './src/screens/HomeScreen';
 import { colors } from './src/theme';
 
 export default function App() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     PlusJakartaSans_300Light,
     PlusJakartaSans_400Regular,
     PlusJakartaSans_500Medium,
@@ -20,7 +20,7 @@ export default function App() {
     PlusJakartaSans_700Bold,
   });
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded && !fontError) {
     return <View style={{ flex: 1, backgroundColor: colors.surface }} />;
   }
 

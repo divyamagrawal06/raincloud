@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useWindowDimensions } from 'react-native';
 import Animated, {
+  cancelAnimation,
   Easing,
   useAnimatedStyle,
   useSharedValue,
@@ -68,7 +69,11 @@ function RainDrop({
         false,
       ),
     );
-  }, []);
+    return () => {
+      cancelAnimation(translateY);
+      cancelAnimation(opacity);
+    };
+  }, [config, screenHeight]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }, { rotate: '-12deg' }],
