@@ -10,7 +10,11 @@ test("root package defines the Raincloud workspace", () => {
   assert.equal(pkg.name, "raincloud");
   assert.equal(pkg.private, true);
   assert.deepEqual(pkg.workspaces, ["apps/*", "packages/*"]);
-  assert.equal(pkg.scripts.test, "node --test tests/*.test.mjs");
+  assert.equal(pkg.scripts.build, "npm run build --workspaces --if-present");
+  assert.equal(
+    pkg.scripts.test,
+    "npm run build --workspaces --if-present && node --test tests/*.test.mjs",
+  );
   assert.equal(pkg.scripts.typecheck, "npm run typecheck --workspaces --if-present");
 });
 

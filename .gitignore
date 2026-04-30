@@ -6,6 +6,7 @@ node_modules/
 .expo-shared/
 web-build/
 dist/
+packages/*/dist/
 
 # Native build output
 android/
