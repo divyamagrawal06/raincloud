@@ -1,0 +1,16 @@
+{
+  "name": "@raincloud/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/server.mjs",
+  "scripts": {
+    "build": "node --check src/pdfMergePlanner.mjs && node --check src/dispatch.mjs && node --check src/server.mjs && node --check scripts/demo-pdf-merge-agent.mjs",
+    "start": "node src/server.mjs",
+    "demo:pdf-merge": "node scripts/demo-pdf-merge-agent.mjs"
+  },
+  "dependencies": {
+    "@azure/identity": "^4.13.0",
+    "@azure/storage-queue": "^12.28.1"
+  }
+}

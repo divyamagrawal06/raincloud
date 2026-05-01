@@ -121,7 +121,9 @@ test("Azure smoke script seeds PDFs, enqueues the task, runs the job, and downlo
   assert.match(smoke, /^#!\/usr\/bin\/env bash/);
   assert.match(smoke, /npm --workspace @raincloud\/worker run seed:pdf-merge/);
   assert.match(smoke, /enqueue-worker-run\.sh/);
+  assert.match(smoke, /JOB_IMAGE="\$\(az containerapp job show/);
   assert.match(smoke, /az containerapp job start/);
+  assert.match(smoke, /--image "\$JOB_IMAGE"/);
   assert.match(smoke, /RAINCLOUD_WORKER_SMOKE_CALLBACK_URL/);
   assert.match(smoke, /https:\/\/httpbingo\.org\/status\/202/);
   assert.match(smoke, /RAINCLOUD_WORKER_CALLBACK_SECRET/);
@@ -129,9 +131,10 @@ test("Azure smoke script seeds PDFs, enqueues the task, runs the job, and downlo
   assert.match(smoke, /\.tmp\/pdf-merge-smoke-payload\.approved\.json/);
   assert.match(smoke, /az containerapp job execution list/);
   assert.match(smoke, /az storage blob download/);
+  assert.match(smoke, /payload\.artifactDestination\?\.prefix/);
+  assert.match(smoke, /payload\.approvedPlan\?\.expectedArtifacts\?\.\[0\]\?\.name/);
   assert.match(smoke, /wslpath -w/);
   assert.match(smoke, /--auth-mode login/);
-  assert.match(smoke, /merged-q1-q3-q2-q4-packet\.pdf/);
   assert.doesNotMatch(smoke, /connection-string/);
   assert.doesNotMatch(smoke, /account-key/);
 });
