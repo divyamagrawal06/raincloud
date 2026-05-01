@@ -1,50 +1,45 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AtmosphericBackground } from '../components/AtmosphericBackground';
 import { BottomTabBar } from '../components/BottomTabBar';
 import { RainEffect } from '../components/RainEffect';
 import { TaskComposerCard } from '../components/TaskComposerCard';
-import { colors, fonts, spacing, typography } from '../theme';
+import { colors, fonts, spacing } from '../theme';
 
-export function HomeScreen() {
-  const [activeTab, setActiveTab] = useState(0);
 
+type Props = {
+  activeTab: number;
+  onTabPress: (i: number) => void;
+};
+
+export function HomeScreen({ activeTab, onTabPress }: Props) {
   function handleSend(text: string) {
-    // Placeholder — will wire to task creation API
     console.log('Task prompt:', text);
   }
 
   return (
     <View style={styles.root}>
       <StatusBar style="light" />
-
-      {/* Layered background */}
       <AtmosphericBackground />
       <RainEffect />
 
-      {/* Scrollable content */}
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Hero */}
         <View style={styles.hero}>
           <Ionicons name="cloud" size={64} color={colors.primary} style={styles.cloudIcon} />
           <Text style={styles.heroTitle}>Raincloud</Text>
         </View>
-
-        {/* Composer */}
         <View style={styles.composerWrapper}>
           <TaskComposerCard onSend={handleSend} />
         </View>
       </ScrollView>
 
-      {/* iOS native tab bar */}
-      <BottomTabBar activeTab={activeTab} onTabPress={setActiveTab} />
+      <BottomTabBar activeTab={activeTab} onTabPress={onTabPress} />
     </View>
   );
 }
