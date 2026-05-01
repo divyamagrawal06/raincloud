@@ -362,7 +362,11 @@ export type WorkerEvent =
   | RunSucceededWorkerEvent
   | RunFailedWorkerEvent;
 
-export type DuplicateWorkerRunStatus = "running" | TerminalWorkerRunStatus;
+export type DuplicateWorkerRunStatus =
+  | "planning"
+  | "running"
+  | "needs_input"
+  | TerminalWorkerRunStatus;
 
 export type WorkerRunClaimResult =
   | {
