@@ -44,6 +44,10 @@ const sanitizeArtifactName = (name) => {
   return name.trim().replaceAll("\\", "-").replaceAll("/", "-");
 };
 
+const isSecretEnvironmentVariableName = (value) =>
+  typeof value === "string" &&
+  /^[A-Z][A-Z0-9_]*_(SECRET|TOKEN|KEY)$/.test(value);
+
 export const resolveOutputBlobName = (payload) => {
   const expectedArtifactName =
     payload.approvedPlan?.expectedArtifacts?.[0]?.name ?? "merged.pdf";
@@ -102,6 +106,14 @@ export const validateWorkerPayload = (payload) => {
 
   if (payload.callback && Object.hasOwn(payload.callback, "secret")) {
     throw new Error("Worker payload must not include a raw callback secret");
+  }
+
+  if (
+    typeof payload.callback?.url !== "string" ||
+    payload.callback.url.length === 0 ||
+    !isSecretEnvironmentVariableName(payload.callback?.secretRef)
+  ) {
+    throw new Error("Worker payload is missing callback url or secretRef");
   }
 
   return payload;

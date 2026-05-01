@@ -61,6 +61,9 @@ create_budget_alert() {
   local contact_email
   contact_email="$(az account show --query user.name -o tsv | tr -d '\r')"
 
+  local END_DATE
+  END_DATE="$(date -u -d '+1 year' +%Y-%m-01 2>/dev/null || date -u -v+1y +%Y-%m-01)T00:00:00Z"
+
   local budget_body
   budget_body="$(cat <<JSON
 {
@@ -70,7 +73,7 @@ create_budget_alert() {
     "timeGrain": "Monthly",
     "timePeriod": {
       "startDate": "$(date -u +%Y-%m-01)T00:00:00Z",
-      "endDate": "2026-12-31T00:00:00Z"
+      "endDate": "$END_DATE"
     },
     "filter": {
       "dimensions": {

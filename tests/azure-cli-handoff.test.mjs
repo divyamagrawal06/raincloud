@@ -75,6 +75,11 @@ test("Azure worker deployment script builds a cost-bounded manual Container Apps
   assert.match(deploy, /wslpath -w/);
   assert.match(deploy, /tr -d '\\r'/);
   assert.match(deploy, /az rest/);
+  assert.match(deploy, /END_DATE=/);
+  assert.match(deploy, /\+1 year/);
+  assert.match(deploy, /date -u -v\+1y/);
+  assert.match(deploy, /"endDate": "\$END_DATE"/);
+  assert.doesNotMatch(deploy, /2026-12-31/);
   assert.match(deploy, /actual_GreaterThan_80_Percent/);
   assert.match(deploy, /actual_GreaterThan_100_Percent/);
   assert.match(deploy, /az containerapp env create/);
