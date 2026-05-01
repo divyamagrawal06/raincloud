@@ -104,8 +104,12 @@ if (!payload.approvedPlan || payload.approvedPlan.status !== "approved") {
   throw new Error("payload.approvedPlan.status must be approved");
 }
 
-if (!payload.callback || payload.callback.secretRef !== "RAINCLOUD_WORKER_CALLBACK_SECRET") {
-  throw new Error("payload.callback.secretRef must be RAINCLOUD_WORKER_CALLBACK_SECRET");
+if (!payload.callback || typeof payload.callback.secretRef !== "string" || !payload.callback.secretRef) {
+  throw new Error("payload.callback.secretRef must be a non-empty string (env-var name, not the secret value)");
+}
+
+if (Object.prototype.hasOwnProperty.call(payload.callback, "secret")) {
+  throw new Error("payload.callback must not include a raw secret");
 }
 
 if (Object.prototype.hasOwnProperty.call(payload.callback, "secret")) {
