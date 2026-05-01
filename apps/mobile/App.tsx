@@ -1,36 +1,32 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import {
+  PlusJakartaSans_300Light,
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_500Medium,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+  useFonts,
+} from '@expo-google-fonts/plus-jakarta-sans';
+import { View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { HomeScreen } from './src/screens/HomeScreen';
+import { colors } from './src/theme';
 
 export default function App() {
+  const [fontsLoaded, fontError] = useFonts({
+    PlusJakartaSans_300Light,
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_500Medium,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+  });
+
+  if (!fontsLoaded && !fontError) {
+    return <View style={{ flex: 1, backgroundColor: colors.surface }} />;
+  }
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.eyebrow}>Raincloud</Text>
-      <Text style={styles.title}>Mobile agent jobs, ready for takeoff.</Text>
-      <StatusBar style="auto" />
-    </View>
+    <SafeAreaProvider>
+      <HomeScreen />
+    </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f7fbff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-  },
-  eyebrow: {
-    color: '#2563eb',
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 12,
-    textTransform: 'uppercase',
-  },
-  title: {
-    color: '#0f172a',
-    fontSize: 28,
-    fontWeight: '700',
-    lineHeight: 34,
-    textAlign: 'center',
-  },
-});
