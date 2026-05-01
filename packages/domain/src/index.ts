@@ -35,6 +35,7 @@ export const taskLanes = [
   "audio_generation",
   "research_packet",
   "file_processing",
+  "pdf_merge",
 ] as const;
 
 export type TaskLane = (typeof taskLanes)[number];
@@ -63,9 +64,14 @@ export const artifactKinds = [
   "audio",
   "video",
   "dataset",
+  "pdf",
 ] as const;
 
 export type ArtifactKind = (typeof artifactKinds)[number];
+
+export const attachmentKinds = ["pdf"] as const;
+
+export type AttachmentKind = (typeof attachmentKinds)[number];
 
 export const workerRunStatuses = [
   "queued",
@@ -97,7 +103,47 @@ export const isTerminalWorkerRunStatus = (
 ): status is TerminalWorkerRunStatus =>
   terminalWorkerRunStatusSet.has(status as WorkerRunStatus);
 
+export const workerEventKinds = [
+  "run_started",
+  "milestone",
+  "artifact_uploaded",
+  "usage_reported",
+  "input_requested",
+  "run_succeeded",
+  "run_failed",
+] as const;
+
+export type WorkerEventKind = (typeof workerEventKinds)[number];
+
+export const terminalWorkerEventKinds = [
+  "run_succeeded",
+  "run_failed",
+] as const satisfies readonly WorkerEventKind[];
+
+export type TerminalWorkerEventKind =
+  (typeof terminalWorkerEventKinds)[number];
+
+const terminalWorkerEventKindSet = new Set<WorkerEventKind>(
+  terminalWorkerEventKinds,
+);
+
+export const isTerminalWorkerEventKind = (
+  kind: string,
+): kind is TerminalWorkerEventKind =>
+  terminalWorkerEventKindSet.has(kind as WorkerEventKind);
+
+export const workerRunClaimStatuses = ["claimed", "duplicate"] as const;
+
+export type WorkerRunClaimStatus = (typeof workerRunClaimStatuses)[number];
+
 export type IsoDateTime = string;
+
+export type PdfMimeType = "application/pdf";
+
+export type AttachmentMimeType = PdfMimeType;
+
+export type SecretEnvironmentVariableName =
+  `${Uppercase<string>}_${"SECRET" | "TOKEN" | "KEY"}`;
 
 export interface Task {
   id: string;
@@ -110,6 +156,19 @@ export interface Task {
   artifactIds: string[];
   createdAt: IsoDateTime;
   updatedAt: IsoDateTime;
+}
+
+export interface Attachment {
+  id: string;
+  taskId: string;
+  kind: AttachmentKind;
+  displayName: string;
+  originalName: string;
+  mimeType: AttachmentMimeType;
+  sizeBytes: number;
+  blobKey: string;
+  uploadedOrder: number;
+  createdAt: IsoDateTime;
 }
 
 export interface TaskPlan {
@@ -127,6 +186,11 @@ export interface TaskPlan {
   risks: string[];
   createdAt: IsoDateTime;
   approvedAt?: IsoDateTime;
+}
+
+export interface ApprovedPlanSnapshot extends TaskPlan {
+  status: "approved";
+  approvedAt: IsoDateTime;
 }
 
 export interface ExpectedArtifact {
@@ -211,3 +275,103 @@ export interface WorkerRun {
   finishedAt?: IsoDateTime;
   failureReason?: string;
 }
+
+export interface WorkerPayloadInput {
+  attachmentId: string;
+  kind: AttachmentKind;
+  blobKey: string;
+  displayName: string;
+  mimeType: AttachmentMimeType;
+}
+
+export interface WorkerArtifactDestination {
+  container: string;
+  prefix: string;
+}
+
+export interface WorkerCallbackTarget {
+  url: string;
+  secretRef: SecretEnvironmentVariableName;
+}
+
+export interface WorkerRunPayload {
+  runId: string;
+  taskId: string;
+  approvedPlanId: string;
+  approvedPlan: ApprovedPlanSnapshot;
+  inputs: WorkerPayloadInput[];
+  artifactDestination: WorkerArtifactDestination;
+  callback: WorkerCallbackTarget;
+}
+
+export interface BaseWorkerEvent {
+  id: string;
+  runId: string;
+  taskId: string;
+  kind: WorkerEventKind;
+  occurredAt: IsoDateTime;
+}
+
+export interface RunStartedWorkerEvent extends BaseWorkerEvent {
+  kind: "run_started";
+}
+
+export interface MilestoneWorkerEvent extends BaseWorkerEvent {
+  kind: "milestone";
+  message: string;
+}
+
+export interface ArtifactUploadedWorkerEvent extends BaseWorkerEvent {
+  kind: "artifact_uploaded";
+  artifact: Artifact;
+}
+
+export interface WorkerUsageReport {
+  creditCost?: number;
+  runtimeSeconds?: number;
+  externalSpendUsd?: number;
+}
+
+export interface UsageReportedWorkerEvent extends BaseWorkerEvent {
+  kind: "usage_reported";
+  usage: WorkerUsageReport;
+}
+
+export interface InputRequestedWorkerEvent extends BaseWorkerEvent {
+  kind: "input_requested";
+  question: ClarifyingQuestion;
+}
+
+export interface RunSucceededWorkerEvent extends BaseWorkerEvent {
+  kind: "run_succeeded";
+  summary: string;
+  artifactIds: string[];
+}
+
+export interface RunFailedWorkerEvent extends BaseWorkerEvent {
+  kind: "run_failed";
+  failureReason: string;
+}
+
+export type WorkerEvent =
+  | RunStartedWorkerEvent
+  | MilestoneWorkerEvent
+  | ArtifactUploadedWorkerEvent
+  | UsageReportedWorkerEvent
+  | InputRequestedWorkerEvent
+  | RunSucceededWorkerEvent
+  | RunFailedWorkerEvent;
+
+export type DuplicateWorkerRunStatus = "running" | TerminalWorkerRunStatus;
+
+export type WorkerRunClaimResult =
+  | {
+      runId: string;
+      status: "claimed";
+      workerRunStatus: "running";
+    }
+  | {
+      runId: string;
+      status: "duplicate";
+      workerRunStatus: DuplicateWorkerRunStatus;
+    };
