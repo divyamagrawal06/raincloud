@@ -376,8 +376,7 @@ const createPlan = ({ taskId, prompt, attachments, plannerJson, now }) => {
     status: "proposed",
     lane: "pdf_merge",
     goal:
-      ensureNonEmptyString(plannerJson.goal, "Planner goal") ||
-      "Merge the uploaded PDFs into one PDF.",
+    goal: ensureNonEmptyString(plannerJson.goal, "Planner goal"),
     assumptions: plannerJson.assumptions,
     requiredInputs: [`${attachmentCount} uploaded PDF attachment${attachmentCount === 1 ? "" : "s"}`],
     requiredPermissions: [
