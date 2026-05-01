@@ -6,12 +6,14 @@ import {
   PlusJakartaSans_700Bold,
   useFonts,
 } from '@expo-google-fonts/plus-jakarta-sans';
+import type { Task } from '@raincloud/domain';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { type Route, TAB_ROUTES, tabIndexForRoute } from './src/navigation';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { NotificationsScreen } from './src/screens/NotificationsScreen';
+import { PlanReviewScreen } from './src/screens/PlanReviewScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { TaskDetailScreen } from './src/screens/TaskDetailScreen';
 import { TasksScreen } from './src/screens/TasksScreen';
@@ -27,6 +29,7 @@ export default function App() {
   });
 
   const [route, setRoute] = useState<Route>({ name: 'home' });
+  const [liveTasks, setLiveTasks] = useState<Task[]>([]);
 
   if (!fontsLoaded && !fontError) {
     return <View style={{ flex: 1, backgroundColor: colors.surface }} />;
@@ -46,13 +49,48 @@ export default function App() {
     setRoute(next);
   }
 
+  function handleTaskUpdate(task: Task) {
+    setLiveTasks((prev) => {
+      const idx = prev.findIndex((t) => t.id === task.id);
+      if (idx >= 0) {
+        const updated = [...prev];
+        updated[idx] = task;
+        return updated;
+      }
+      return [task, ...prev];
+    });
+  }
+
+  function handleTaskApproved(taskId: string, _runId: string) {
+    setRoute({ name: 'task-detail', taskId, from: 'plan-review' });
+  }
+
   return (
     <SafeAreaProvider>
       {route.name === 'home' && (
-        <HomeScreen activeTab={activeTab} onTabPress={handleTabPress} />
+        <HomeScreen
+          activeTab={activeTab}
+          onTabPress={handleTabPress}
+          onNavigate={handleNavigate}
+        />
+      )}
+      {route.name === 'plan-review' && (
+        <PlanReviewScreen
+          taskId={route.taskId}
+          planResult={route.planResult}
+          onApproved={handleTaskApproved}
+          onBack={() => setRoute({ name: 'home' })}
+          activeTab={activeTab}
+          onTabPress={handleTabPress}
+        />
       )}
       {route.name === 'tasks' && (
-        <TasksScreen activeTab={activeTab} onTabPress={handleTabPress} onNavigate={handleNavigate} />
+        <TasksScreen
+          activeTab={activeTab}
+          onTabPress={handleTabPress}
+          onNavigate={handleNavigate}
+          liveTasks={liveTasks}
+        />
       )}
       {route.name === 'task-detail' && (
         <TaskDetailScreen
@@ -60,6 +98,7 @@ export default function App() {
           activeTab={activeTab}
           onTabPress={handleTabPress}
           onBack={() => setRoute(route.from === 'notifications' ? { name: 'notifications' } : { name: 'tasks' })}
+          onTaskUpdate={handleTaskUpdate}
         />
       )}
       {route.name === 'notifications' && (
