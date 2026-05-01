@@ -56,13 +56,16 @@ type Props = {
   activeTab: number;
   onTabPress: (i: number) => void;
   onNavigate: (route: Route) => void;
+  liveTasks?: Task[];
 };
 
-export function TasksScreen({ activeTab, onTabPress, onNavigate }: Props) {
+export function TasksScreen({ activeTab, onTabPress, onNavigate, liveTasks }: Props) {
   const insets = useSafeAreaInsets();
   const [filter, setFilter] = useState<Filter>('all');
 
-  const filtered = MOCK_TASKS.filter((t) => {
+  const allTasks = [...(liveTasks ?? []), ...MOCK_TASKS];
+
+  const filtered = allTasks.filter((t) => {
     if (filter === 'active') return ACTIVE_STATUSES.includes(t.status);
     if (filter === 'done') return DONE_STATUSES.includes(t.status);
     return true;

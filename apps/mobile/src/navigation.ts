@@ -1,9 +1,12 @@
+import type { PlanResult } from './api/raincloudClient';
+
 export type Route =
   | { name: 'home' }
   | { name: 'tasks' }
-  | { name: 'task-detail'; taskId: string; from: 'tasks' | 'notifications' }
+  | { name: 'task-detail'; taskId: string; from: 'tasks' | 'notifications' | 'plan-review' }
   | { name: 'notifications' }
-  | { name: 'profile' };
+  | { name: 'profile' }
+  | { name: 'plan-review'; taskId: string; planResult: PlanResult & { status: 'plan_review' } };
 
 export function tabIndexForRoute(route: Route): number {
   switch (route.name) {
@@ -12,6 +15,7 @@ export function tabIndexForRoute(route: Route): number {
     case 'task-detail': return 1;
     case 'notifications': return 2;
     case 'profile': return 3;
+    case 'plan-review': return 0;
   }
 }
 

@@ -1,21 +1,46 @@
 import { BlurView } from 'expo-blur';
+import * as DocumentPicker from 'expo-document-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import type { PickedFile } from '../api/raincloudClient';
 import { colors, radii, spacing, typography } from '../theme';
 
 type Props = {
-  onSend: (text: string) => void;
+  onSend: (text: string, files: PickedFile[]) => void;
+  disabled?: boolean;
 };
 
-export function TaskComposerCard({ onSend }: Props) {
+export function TaskComposerCard({ onSend, disabled }: Props) {
   const [text, setText] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState<PickedFile[]>([]);
+
+  async function handleAttach() {
+    if (disabled || selectedFiles.length >= 7) return;
+    const result = await DocumentPicker.getDocumentAsync({
+      type: 'application/pdf',
+      multiple: true,
+      copyToCacheDirectory: true,
+    });
+    if (!result.canceled) {
+      const merged = [...selectedFiles, ...result.assets];
+      setSelectedFiles(merged.slice(0, 7));
+    }
+  }
+
+  function removeFile(index: number) {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  }
 
   function handleSend() {
-    if (!text.trim()) return;
-    onSend(text.trim());
+    if (disabled) return;
+    if (!text.trim() && selectedFiles.length === 0) return;
+    onSend(text.trim(), selectedFiles);
     setText('');
+    setSelectedFiles([]);
   }
+
+  const atLimit = selectedFiles.length >= 7;
 
   return (
     <View style={styles.wrapper}>
@@ -40,20 +65,60 @@ export function TaskComposerCard({ onSend }: Props) {
         multiline
         numberOfLines={4}
         textAlignVertical="top"
+        editable={!disabled}
       />
+
+      {/* Selected files chips */}
+      {selectedFiles.length > 0 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.fileChipsScroll}
+          contentContainerStyle={styles.fileChipsContent}
+        >
+          {selectedFiles.map((file, index) => (
+            <View key={index} style={styles.fileChip}>
+              <Ionicons name="document-outline" size={13} color={colors.primary} />
+              <Text style={styles.fileChipName} numberOfLines={1}>
+                {file.name}
+              </Text>
+              <TouchableOpacity onPress={() => removeFile(index)} hitSlop={8}>
+                <Ionicons name="close" size={13} color="rgba(255,255,255,0.5)" />
+              </TouchableOpacity>
+            </View>
+          ))}
+        </ScrollView>
+      )}
 
       {/* Action row */}
       <View style={styles.actionRow}>
         <View style={styles.leftActions}>
-          <TouchableOpacity style={styles.iconBtn} activeOpacity={0.7}>
-            <Ionicons name="attach" size={22} color="rgba(255,255,255,0.7)" />
+          <TouchableOpacity
+            style={[styles.iconBtn, atLimit && styles.iconBtnDisabled]}
+            activeOpacity={0.7}
+            onPress={handleAttach}
+            disabled={atLimit || disabled}
+          >
+            <Ionicons
+              name="attach"
+              size={22}
+              color={atLimit ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.7)'}
+            />
           </TouchableOpacity>
+          {atLimit && (
+            <Text style={styles.limitLabel}>7 max</Text>
+          )}
           <TouchableOpacity style={styles.iconBtn} activeOpacity={0.7}>
             <Ionicons name="mic-outline" size={22} color="rgba(255,255,255,0.7)" />
           </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.sendBtn} onPress={handleSend} activeOpacity={0.85}>
-          <Text style={styles.sendLabel}>Send</Text>
+        <TouchableOpacity
+          style={[styles.sendBtn, disabled && styles.sendBtnDisabled]}
+          onPress={handleSend}
+          activeOpacity={0.85}
+          disabled={disabled}
+        >
+          <Text style={styles.sendLabel}>{disabled ? 'Uploading…' : 'Send'}</Text>
           <Ionicons name="send" size={16} color="#fff" />
         </TouchableOpacity>
       </View>
@@ -77,7 +142,6 @@ const styles = StyleSheet.create({
   innerGlow: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'transparent',
-    // subtle top-left corner light leak
     borderRadius: 40,
   },
   modelRow: {
@@ -107,6 +171,31 @@ const styles = StyleSheet.create({
     padding: 0,
     marginBottom: spacing.sm,
   },
+  fileChipsScroll: {
+    marginBottom: spacing.sm,
+  },
+  fileChipsContent: {
+    gap: 6,
+    paddingVertical: 2,
+  },
+  fileChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(173,198,255,0.12)',
+    borderRadius: radii.full,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderWidth: 0.5,
+    borderColor: 'rgba(173,198,255,0.25)',
+    maxWidth: 180,
+  },
+  fileChipName: {
+    ...typography.bodySm,
+    color: colors.onSurface,
+    flex: 1,
+    fontSize: 12,
+  },
   actionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -115,7 +204,13 @@ const styles = StyleSheet.create({
   },
   leftActions: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.sm,
+  },
+  limitLabel: {
+    ...typography.bodySm,
+    color: 'rgba(255,255,255,0.3)',
+    fontSize: 11,
   },
   iconBtn: {
     width: 40,
@@ -126,6 +221,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.05)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  iconBtnDisabled: {
+    opacity: 0.4,
   },
   sendBtn: {
     flexDirection: 'row',
@@ -139,6 +237,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
+  },
+  sendBtnDisabled: {
+    opacity: 0.5,
   },
   sendLabel: {
     ...typography.bodySm,

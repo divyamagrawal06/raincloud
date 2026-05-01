@@ -1,7 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { TaskStatus } from '@raincloud/domain';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import type { Task, TaskStatus } from '@raincloud/domain';
+import { isTerminalTaskStatus } from '@raincloud/domain';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getArtifactDownloadUrl, getTask as getTaskFromApi } from '../api/raincloudClient';
+import type { TaskResponse } from '../api/raincloudClient';
 import { AtmosphericBackground } from '../components/AtmosphericBackground';
 import { BottomTabBar } from '../components/BottomTabBar';
 import { GlassCard } from '../components/GlassCard';
@@ -11,11 +15,14 @@ import { StatusChip } from '../components/StatusChip';
 import { MOCK_ARTIFACTS, MOCK_FAILURE_REASONS, MOCK_PLANS, MOCK_TASKS } from '../fixtures';
 import { colors, fonts, radii, spacing, typography } from '../theme';
 
+const POLL_INTERVAL_MS = 3000;
+
 type Props = {
   taskId: string;
   activeTab: number;
   onTabPress: (i: number) => void;
   onBack: () => void;
+  onTaskUpdate?: (task: Task) => void;
 };
 
 const STATUS_ICON: Record<TaskStatus, keyof typeof Ionicons.glyphMap> = {
@@ -46,24 +53,89 @@ function StepRow({ index, text }: { index: number; text: string }) {
   );
 }
 
-export function TaskDetailScreen({ taskId, activeTab, onTabPress, onBack }: Props) {
-  const insets = useSafeAreaInsets();
-  const task = MOCK_TASKS.find((t) => t.id === taskId);
+function buildFixtureResponse(taskId: string): TaskResponse | null {
+  const mockTask = MOCK_TASKS.find((t) => t.id === taskId);
+  if (!mockTask) return null;
+  return {
+    task: mockTask,
+    plan: mockTask.activePlanId ? (MOCK_PLANS[mockTask.activePlanId] ?? null) : null,
+    run: null,
+    artifacts: mockTask.artifactIds.map((id) => MOCK_ARTIFACTS[id]).filter(Boolean),
+  };
+}
 
-  if (!task) {
+export function TaskDetailScreen({ taskId, activeTab, onTabPress, onBack, onTaskUpdate }: Props) {
+  const insets = useSafeAreaInsets();
+  const [taskData, setTaskData] = useState<TaskResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    const load = async () => {
+      try {
+        const data = await getTaskFromApi(taskId);
+        if (!active) return;
+        setTaskData(data);
+        onTaskUpdate?.(data.task);
+        // Stop polling once terminal
+        if (isTerminalTaskStatus(data.task.status) && intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+      } catch {
+        // Fall back to fixture data for demo/mock tasks
+        if (!active) return;
+        const fixture = buildFixtureResponse(taskId);
+        if (fixture) setTaskData(fixture);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    load();
+
+    intervalRef.current = setInterval(load, POLL_INTERVAL_MS);
+
+    return () => {
+      active = false;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [taskId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleDownload(artifactId: string) {
+    const { url } = getArtifactDownloadUrl(artifactId);
+    await Linking.openURL(url);
+  }
+
+  if (loading) {
     return (
-      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
+      <View style={[styles.root, styles.centered]}>
+        <AtmosphericBackground />
+        <ActivityIndicator color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (!taskData) {
+    return (
+      <View style={[styles.root, styles.centered]}>
+        <AtmosphericBackground />
         <Text style={{ color: '#fff' }}>Task not found.</Text>
       </View>
     );
   }
 
-  const plan = task.activePlanId ? MOCK_PLANS[task.activePlanId] : undefined;
-  const artifacts = task.artifactIds.map((id) => MOCK_ARTIFACTS[id]).filter(Boolean);
+  const { task, plan, run, artifacts } = taskData;
   const isRunning = task.status === 'running';
   const isPlanReview = task.status === 'plan_review';
   const isSucceeded = task.status === 'succeeded';
   const isFailed = task.status === 'failed';
+  const failureReason = run?.failureReason ?? MOCK_FAILURE_REASONS[task.id];
 
   return (
     <View style={styles.root}>
@@ -106,14 +178,17 @@ export function TaskDetailScreen({ taskId, activeTab, onTabPress, onBack }: Prop
                 {isRunning ? 'Running now' : isSucceeded ? 'Completed' : isFailed ? 'Failed' : task.status.replace('_', ' ')}
               </Text>
               {isRunning && (
-                <Text style={styles.statusSub}>Milestones will appear here as the job progresses.</Text>
+                <Text style={styles.statusSub}>Checking for updates every {POLL_INTERVAL_MS / 1000}s…</Text>
               )}
-              {isFailed && MOCK_FAILURE_REASONS[task.id] && (
+              {isFailed && failureReason && (
                 <Text style={[styles.statusSub, { color: '#f87171' }]}>
-                  {MOCK_FAILURE_REASONS[task.id]}
+                  {failureReason}
                 </Text>
               )}
             </View>
+            {(task.status === 'queued' || isRunning) && (
+              <ActivityIndicator size="small" color={colors.primary} />
+            )}
           </View>
         </GlassCard>
 
@@ -179,8 +254,8 @@ export function TaskDetailScreen({ taskId, activeTab, onTabPress, onBack }: Prop
           </>
         )}
 
-        {/* Approve CTA */}
-        {isPlanReview && (
+        {/* Approve CTA — shown for demo mock tasks in plan_review; real tasks go through PlanReviewScreen */}
+        {isPlanReview && !run && (
           <TouchableOpacity style={styles.approveBtn} activeOpacity={0.85}>
             <Ionicons name="play" size={18} color="#fff" />
             <Text style={styles.approveBtnLabel}>Approve & Run</Text>
@@ -207,7 +282,11 @@ export function TaskDetailScreen({ taskId, activeTab, onTabPress, onBack }: Prop
                         <Text style={styles.artifactDesc}>{artifact.description}</Text>
                       )}
                     </View>
-                    <TouchableOpacity style={styles.downloadBtn} activeOpacity={0.7}>
+                    <TouchableOpacity
+                      style={styles.downloadBtn}
+                      activeOpacity={0.7}
+                      onPress={() => handleDownload(artifact.id)}
+                    >
                       <Ionicons name="download-outline" size={18} color="#007AFF" />
                     </TouchableOpacity>
                   </View>
@@ -225,6 +304,7 @@ export function TaskDetailScreen({ taskId, activeTab, onTabPress, onBack }: Prop
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.surface },
+  centered: { alignItems: 'center', justifyContent: 'center' },
   navbar: {
     position: 'absolute',
     top: 0,
