@@ -15,6 +15,8 @@ ENVIRONMENT_NAME="${AZURE_CONTAINER_APPS_ENVIRONMENT_NAME:-raincloud-mvp-env}"
 JOB_NAME="${AZURE_HERMES_JOB_NAME:-hermes-worker-job}"
 IMAGE_TAG="${IMAGE_TAG:-$(git -C "$REPO_ROOT" rev-parse --short HEAD 2>/dev/null || date +%Y%m%d%H%M%S)}"
 BUDGET_NAME="${AZURE_BUDGET_NAME:-raincloud-mvp-20-usd}"
+WORKER_CALLBACK_SECRET="${RAINCLOUD_WORKER_CALLBACK_SECRET:-}"
+WORKER_CALLBACK_SECRET_NAME="raincloud-worker-callback-secret"
 
 usage() {
   cat <<'USAGE'
@@ -219,8 +221,23 @@ az containerapp env create \
   --output none
 
 FULL_IMAGE="$ACR_LOGIN_SERVER/$IMAGE_NAME"
+CALLBACK_ENV_VARS=()
+CALLBACK_SECRET_ARGS=()
+
+if [[ -n "$WORKER_CALLBACK_SECRET" ]]; then
+  CALLBACK_ENV_VARS+=("RAINCLOUD_WORKER_CALLBACK_SECRET=secretref:$WORKER_CALLBACK_SECRET_NAME")
+  CALLBACK_SECRET_ARGS+=(--secrets "$WORKER_CALLBACK_SECRET_NAME=$WORKER_CALLBACK_SECRET")
+fi
 
 if az containerapp job show --resource-group "$RESOURCE_GROUP" --name "$JOB_NAME" >/dev/null 2>&1; then
+  if [[ -n "$WORKER_CALLBACK_SECRET" ]]; then
+    az containerapp job secret set \
+      --resource-group "$RESOURCE_GROUP" \
+      --name "$JOB_NAME" \
+      --secrets "$WORKER_CALLBACK_SECRET_NAME=$WORKER_CALLBACK_SECRET" \
+      --output none
+  fi
+
   az containerapp job update \
     --resource-group "$RESOURCE_GROUP" \
     --name "$JOB_NAME" \
@@ -234,6 +251,7 @@ if az containerapp job show --resource-group "$RESOURCE_GROUP" --name "$JOB_NAME
     --set-env-vars \
       AZURE_STORAGE_ACCOUNT_NAME="$STORAGE_ACCOUNT_NAME" \
       AZURE_STORAGE_QUEUE_NAME="$QUEUE_NAME" \
+      "${CALLBACK_ENV_VARS[@]}" \
     --output none
 else
   az containerapp job create \
@@ -251,9 +269,11 @@ else
     --mi-system-assigned \
     --registry-server "$ACR_LOGIN_SERVER" \
     --registry-identity system \
+    "${CALLBACK_SECRET_ARGS[@]}" \
     --env-vars \
       AZURE_STORAGE_ACCOUNT_NAME="$STORAGE_ACCOUNT_NAME" \
       AZURE_STORAGE_QUEUE_NAME="$QUEUE_NAME" \
+      "${CALLBACK_ENV_VARS[@]}" \
     --output none
 fi
 

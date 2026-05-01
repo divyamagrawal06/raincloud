@@ -67,6 +67,8 @@ test("root env example documents cloud dispatch configuration", () => {
     "AZURE_HERMES_JOB_NAME",
     "RAINCLOUD_API_URL",
     "RAINCLOUD_WORKER_CALLBACK_SECRET",
+    "RAINCLOUD_WORKER_SMOKE_CALLBACK_URL",
+    "RAINCLOUD_WORKER_SMOKE_CALLBACK_SECRET",
     "OPENAI_API_KEY",
     "SUPABASE_URL",
     "SUPABASE_SERVICE_ROLE_KEY",

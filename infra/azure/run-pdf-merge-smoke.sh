@@ -9,6 +9,9 @@ STORAGE_ACCOUNT_NAME="${AZURE_STORAGE_ACCOUNT_NAME:-}"
 QUEUE_NAME="${AZURE_STORAGE_QUEUE_NAME:-approved-worker-runs}"
 JOB_NAME="${AZURE_HERMES_JOB_NAME:-hermes-worker-job}"
 PAYLOAD_FILE="fixtures/worker-runs/pdf-merge-seven-pdfs.approved.json"
+SMOKE_PAYLOAD_FILE=".tmp/pdf-merge-smoke-payload.approved.json"
+SMOKE_CALLBACK_URL="${RAINCLOUD_WORKER_SMOKE_CALLBACK_URL:-https://httpbingo.org/status/202}"
+SMOKE_CALLBACK_SECRET="${RAINCLOUD_WORKER_SMOKE_CALLBACK_SECRET:-raincloud-smoke-callback-secret}"
 SEED_DIR=".tmp/pdf-merge-inputs"
 OUTPUT_FILE=".tmp/merged-q1-q3-q2-q4-packet.pdf"
 OUTPUT_CONTAINER="outputs"
@@ -21,7 +24,7 @@ Run the PDF merge cloud smoke test.
 The script:
   1. Generates seven seed PDFs locally.
   2. Uploads them to the Azure inputs container.
-  3. Enqueues the approved worker payload.
+  3. Enqueues the approved worker payload with a smoke callback target.
   4. Starts the manual Hermes worker Container Apps Job.
   5. Downloads the merged PDF artifact.
 
@@ -31,6 +34,7 @@ Options:
   --queue-name <name>       Queue name. Default: approved-worker-runs
   --job-name <name>         Container Apps Job name. Default: hermes-worker-job
   --payload <path>          Approved payload fixture. Default: fixtures/worker-runs/pdf-merge-seven-pdfs.approved.json
+  --callback-url <url>      Worker callback URL. Default: https://httpbingo.org/status/202
   --output <path>           Local merged PDF output path. Default: .tmp/merged-q1-q3-q2-q4-packet.pdf
   -h, --help                Show this help
 USAGE
@@ -90,6 +94,10 @@ while [[ $# -gt 0 ]]; do
       PAYLOAD_FILE="${2:-}"
       shift 2
       ;;
+    --callback-url)
+      SMOKE_CALLBACK_URL="${2:-}"
+      shift 2
+      ;;
     --output)
       OUTPUT_FILE="${2:-}"
       shift 2
@@ -116,8 +124,23 @@ rm -rf "$SEED_DIR"
 mkdir -p "$(dirname "$OUTPUT_FILE")"
 
 PAYLOAD_FILE_FOR_NODE="$(az_file_path "$REPO_ROOT/$PAYLOAD_FILE")"
+SMOKE_PAYLOAD_FILE_FOR_NODE="$(az_file_path "$REPO_ROOT/$SMOKE_PAYLOAD_FILE")"
 SEED_DIR_FOR_NODE="$(az_file_path "$REPO_ROOT/$SEED_DIR")"
 npm --workspace @raincloud/worker run seed:pdf-merge -- "$PAYLOAD_FILE_FOR_NODE" "$SEED_DIR_FOR_NODE"
+
+"$NODE_BIN" -e '
+const fs = require("node:fs");
+const path = require("node:path");
+const [inputPath, outputPath, callbackUrl] = process.argv.slice(1);
+const payload = JSON.parse(fs.readFileSync(inputPath, "utf8"));
+payload.callback = {
+  ...payload.callback,
+  url: callbackUrl,
+  secretRef: "RAINCLOUD_WORKER_CALLBACK_SECRET",
+};
+fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+fs.writeFileSync(outputPath, `${JSON.stringify(payload, null, 2)}\n`);
+' "$PAYLOAD_FILE_FOR_NODE" "$SMOKE_PAYLOAD_FILE_FOR_NODE" "$SMOKE_CALLBACK_URL"
 
 AZ_SEED_DIR="$(az_file_path "$REPO_ROOT/$SEED_DIR")"
 az storage blob upload-batch \
@@ -131,12 +154,16 @@ az storage blob upload-batch \
 bash "$SCRIPT_DIR/enqueue-worker-run.sh" \
   --storage-account "$STORAGE_ACCOUNT_NAME" \
   --queue-name "$QUEUE_NAME" \
-  --payload "$PAYLOAD_FILE" \
+  --payload "$SMOKE_PAYLOAD_FILE" \
   --ttl-seconds 3600 >/dev/null
 
 EXECUTION_NAME="$(az containerapp job start \
   --resource-group "$RESOURCE_GROUP" \
   --name "$JOB_NAME" \
+  --env-vars \
+    AZURE_STORAGE_ACCOUNT_NAME="$STORAGE_ACCOUNT_NAME" \
+    AZURE_STORAGE_QUEUE_NAME="$QUEUE_NAME" \
+    RAINCLOUD_WORKER_CALLBACK_SECRET="$SMOKE_CALLBACK_SECRET" \
   --query name \
   -o tsv | tr -d '\r')"
 

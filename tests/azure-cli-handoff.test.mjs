@@ -88,6 +88,9 @@ test("Azure worker deployment script builds a cost-bounded manual Container Apps
   assert.match(deploy, /--trigger-type Manual/);
   assert.match(deploy, /--mi-system-assigned/);
   assert.match(deploy, /--registry-identity system/);
+  assert.match(deploy, /RAINCLOUD_WORKER_CALLBACK_SECRET/);
+  assert.match(deploy, /raincloud-worker-callback-secret/);
+  assert.match(deploy, /secretref:\$WORKER_CALLBACK_SECRET_NAME/);
   assert.match(deploy, /Storage Queue Data Contributor/);
   assert.match(deploy, /Storage Blob Data Contributor/);
   assert.doesNotMatch(deploy, /AZURE_CLIENT_SECRET/);
@@ -119,6 +122,11 @@ test("Azure smoke script seeds PDFs, enqueues the task, runs the job, and downlo
   assert.match(smoke, /npm --workspace @raincloud\/worker run seed:pdf-merge/);
   assert.match(smoke, /enqueue-worker-run\.sh/);
   assert.match(smoke, /az containerapp job start/);
+  assert.match(smoke, /RAINCLOUD_WORKER_SMOKE_CALLBACK_URL/);
+  assert.match(smoke, /https:\/\/httpbingo\.org\/status\/202/);
+  assert.match(smoke, /RAINCLOUD_WORKER_CALLBACK_SECRET/);
+  assert.match(smoke, /--env-vars/);
+  assert.match(smoke, /\.tmp\/pdf-merge-smoke-payload\.approved\.json/);
   assert.match(smoke, /az containerapp job execution list/);
   assert.match(smoke, /az storage blob download/);
   assert.match(smoke, /wslpath -w/);
@@ -171,6 +179,8 @@ test("Azure CLI MVP deployment docs explain local CLI auth and the smoke path", 
   assert.match(doc, /infra\/azure\/run-pdf-merge-smoke\.sh/);
   assert.match(doc, /infra\/azure\/enqueue-worker-run\.sh/);
   assert.match(doc, /fixtures\/worker-runs\/pdf-merge-seven-pdfs\.approved\.json/);
+  assert.match(doc, /\.tmp\/pdf-merge-smoke-payload\.approved\.json/);
   assert.match(doc, /RAINCLOUD_WORKER_CALLBACK_SECRET/);
+  assert.match(doc, /RAINCLOUD_WORKER_SMOKE_CALLBACK_URL/);
   assert.match(doc, /raw secret/i);
 });

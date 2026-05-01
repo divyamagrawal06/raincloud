@@ -50,7 +50,9 @@ The smoke script:
 
 - Generates seven small PDF inputs locally.
 - Uploads them to the `inputs` container.
-- Enqueues `fixtures/worker-runs/pdf-merge-seven-pdfs.approved.json`.
+- Reads `fixtures/worker-runs/pdf-merge-seven-pdfs.approved.json`.
+- Writes a temporary `.tmp/pdf-merge-smoke-payload.approved.json` with a smoke callback URL.
+- Enqueues that temporary approved payload.
 - Starts the manual Container Apps Job.
 - Downloads `.tmp/merged-q1-q3-q2-q4-packet.pdf`.
 
@@ -58,10 +60,12 @@ The sample payload is the first acceptance task: merge seven PDFs, with the clar
 
 ## Secret Boundary
 
-The queue message contains `callback.secretRef: "RAINCLOUD_WORKER_CALLBACK_SECRET"`. That value is an environment variable key for the future worker container to resolve locally.
+The queue message contains `callback.secretRef: "RAINCLOUD_WORKER_CALLBACK_SECRET"`. That value is an environment variable key for the worker container to resolve locally before posting callbacks.
 
 The raw secret must never appear in the queue message. `infra/azure/enqueue-worker-run.sh` rejects payloads that include `callback.secret`, and it does not read or serialize the local value of `RAINCLOUD_WORKER_CALLBACK_SECRET`.
 
+For real API callbacks, set `RAINCLOUD_WORKER_CALLBACK_SECRET` before deploying; `infra/azure/deploy-worker-job.sh` stores it as a Container Apps Job secret and exposes it as a `secretref:` env var. The smoke script uses `RAINCLOUD_WORKER_SMOKE_CALLBACK_URL` and `RAINCLOUD_WORKER_SMOKE_CALLBACK_SECRET` for a throwaway callback target, defaulting to a public `202` response endpoint.
+
 ## Current Limit
 
-This path is end-to-end for the seven-PDF smoke task, but it is not yet the product loop. The current worker is manually started, processes one queue message, uploads one artifact, and exits. The API callback receiver, mobile upload flow, clarifying-question planner, durable run store, and automatic queue-triggered scaling still come next.
+This path is end-to-end for the seven-PDF smoke task, but it is not yet the product loop. The current worker is manually started, processes one queue message, uploads one artifact, posts worker events to the callback URL, and exits. The API callback receiver, mobile upload flow, clarifying-question planner, durable run store, and automatic queue-triggered scaling still come next.
