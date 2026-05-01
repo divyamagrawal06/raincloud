@@ -12,6 +12,7 @@ const LANE_META: Record<TaskLane, { icon: IoniconName; label: string }> = {
   audio_generation: { icon: 'musical-notes-outline', label: 'Audio' },
   research_packet:  { icon: 'library-outline',       label: 'Research' },
   file_processing:  { icon: 'folder-outline',        label: 'Files' },
+  pdf_merge:         { icon: 'documents-outline',     label: 'PDF' },
 };
 
 type Props = { lane: TaskLane };
