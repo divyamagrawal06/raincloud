@@ -1,15 +1,15 @@
 # Raincloud
 
-Raincloud is a mobile-first AI task platform. Describe a job from your phone, review the plan, approve it, and come back to a finished artifact — no laptop required.
+Raincloud is a mobile-first AI task platform. Describe a job from your phone, review the plan, approve it, and come back to a finished artifact. With no laptop or desktop required AT ALL.
 
-The first task lane merges PDFs: pick files from your phone, describe how you want them combined, review the AI-generated plan, approve it, and receive the merged document when the cloud worker finishes.
+Architecture diagram: https://drive.google.com/file/d/1BxcaevxHWsOrPLCg1dyjjwh0IHWFxKcR/view?usp=sharing
 
 ## How It Works
 
-1. **Attach & describe** — pick up to 7 PDFs and type a merge prompt (e.g. *"quarterly reports in order, Q1 first"*).
+1. **Attach & describe** — simple natural language prompt.
 2. **Review the plan** — the API calls OpenAI to generate an ordered file list, assumptions, and steps. Reorder or refine before approving.
 3. **Approve** — the plan is enqueued as a worker job on Azure Container Apps.
-4. **Poll & download** — the app polls every 3 s; when the worker finishes, tap Download to open the merged PDF.
+4. **Poll & download** — the app polls every 3 s; when the worker finishes, tap Download to open the end artifact and result.
 
 ## Stack
 
@@ -100,21 +100,6 @@ npx expo start --prefix apps/mobile --host lan
 ```
 
 Scan the QR code with Expo Go.
-
-## Demo Flow
-
-1. Tap the attach button → pick 1–7 PDFs.
-2. Type a merge prompt and tap **Send** → plan review screen appears.
-3. Optionally type a reorder instruction and tap **Apply**.
-4. Tap **Approve & Run** → task shows `queued`.
-5. Trigger the worker:
-   ```sh
-   az containerapp job start \
-     --name hermes-worker-job \
-     --resource-group <resource-group>
-   ```
-6. Watch the task poll to `running` → `succeeded`.
-7. Tap **Download** — merged PDF opens in your system viewer.
 
 ## Development
 
