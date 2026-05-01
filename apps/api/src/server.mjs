@@ -99,23 +99,25 @@ async function handleUploads(request, response) {
   const taskId = randomUUID();
 
   const attachmentList = [];
+  const blobsToDelete = []; // tracked for cleanup on error (best-effort)
+  let containerClient = null;
   let uploadError = null;
 
   try {
     const blobServiceClient = await getBlobServiceClient();
-    const containerClient = blobServiceClient.getContainerClient(inputsContainer);
+    containerClient = blobServiceClient.getContainerClient(inputsContainer);
 
     await new Promise((resolve, reject) => {
       const bb = busboy({ headers: request.headers, limits: { fileSize: 50 * 1024 * 1024 } });
       const uploadPromises = [];
       let fileIndex = 0;
       let tooManyFiles = false;
+      let fatalError = false;
 
       bb.on("file", (_fieldname, stream, info) => {
         const thisIndex = fileIndex++;
 
-        if (thisIndex >= 7) {
-          tooManyFiles = true;
+        if (thisIndex >= 7 || fatalError) {
           stream.resume();
           return;
         }
@@ -124,6 +126,7 @@ async function handleUploads(request, response) {
 
         if (mimeType !== "application/pdf") {
           stream.resume();
+          fatalError = true;
           const err = new Error(`File "${filename}" is not a PDF (received ${mimeType})`);
           err.statusCode = 400;
           reject(err);
@@ -134,6 +137,7 @@ async function handleUploads(request, response) {
         const blobName = `${taskId}/${attachmentId}.pdf`;
         const blobKey = `${inputsContainer}/${blobName}`;
         const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+        blobsToDelete.push(blockBlobClient);
         const displayName = filename || `file-${thisIndex + 1}.pdf`;
 
         const chunks = [];
@@ -198,6 +202,11 @@ async function handleUploads(request, response) {
   }
 
   if (uploadError) {
+    // Best-effort cleanup: delete any blobs created before the error fired.
+    // deleteIfExists tolerates blobs that haven't finished uploading yet.
+    for (const client of blobsToDelete) {
+      client.deleteIfExists().catch(() => {});
+    }
     sendJson(response, uploadError.statusCode ?? 500, {
       error: uploadError.message ?? "Upload failed",
     });
@@ -396,6 +405,13 @@ async function handleWorkerEvent(request, response, [runId]) {
   // Idempotency: return 200 so the worker deletes the queue message on retry.
   if (isEventProcessed(runId, event.id)) {
     sendJson(response, 200, { status: "duplicate" });
+    return;
+  }
+
+  // Validate payload before claiming — a bad payload must not permanently
+  // tombstone the event (worker would see "duplicate" on retry and give up).
+  if (event.kind === "artifact_uploaded" && !event.artifact?.id) {
+    sendJson(response, 400, { error: "artifact_uploaded event missing artifact payload" });
     return;
   }
 
