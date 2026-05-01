@@ -193,6 +193,10 @@ The exact schema can evolve, but the payload must preserve these properties:
 - It uses scoped file references.
 - It repeats execution limits.
 - It includes a callback target for append-only worker events.
+- It references callback credentials by environment variable key only.
+- It never serializes raw secrets into the Storage Queue message.
+
+In the sample payload, `callback.secretRef` is the name of a secret-backed environment variable available inside the worker container. The worker resolves that environment variable locally when signing callback requests. The raw callback secret must be stored in the worker environment or secret store, not in the queue message.
 
 ## Worker Events
 
@@ -207,6 +211,22 @@ The worker should report append-only events to the API:
 - `run_failed`
 
 The API translates these events into canonical task and worker run state. The worker does not directly own user-visible status outside its event reports.
+
+## Queue Delivery And Idempotency
+
+Azure Storage Queue delivery must be treated as at least once. A worker run can be delivered more than once if a job crashes, is cancelled, or exceeds the message visibility timeout before deletion.
+
+MVP idempotency rules:
+
+- The API is the idempotency authority for `runId`.
+- Before downloading inputs, calling Hermes, uploading artifacts, or recording billable usage, the worker must claim the run through the API.
+- The API claim operation must atomically transition `queued` to `running` for that `runId`.
+- If the run is already `running` or terminal, the API returns the current state and the duplicate worker exits without side effects.
+- Artifact destinations are deterministic per run, such as `outputs/{taskId}/{runId}/merged.pdf`, so retries cannot create extra user-visible artifacts.
+- Final callbacks are idempotent: the API accepts the first valid terminal event and ignores later terminal events for the same `runId`.
+- The worker deletes the queue message only after the API accepts `run_succeeded` or `run_failed`, or after the API confirms the message is a duplicate for an already running or terminal run.
+
+This makes duplicate delivery safe. A second worker can receive the same approved payload, but it cannot produce another artifact, advance state, or record additional usage unless it first wins the API claim.
 
 ## Required Azure Resources
 
