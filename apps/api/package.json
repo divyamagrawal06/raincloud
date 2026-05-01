@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@azure/identity": "^4.13.0",
-    "@azure/storage-queue": "^12.28.1"
+    "@azure/storage-blob": "^12.29.0",
+    "@azure/storage-queue": "^12.28.1",
+    "busboy": "^1.6.0"
   }
 }

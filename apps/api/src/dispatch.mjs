@@ -29,15 +29,19 @@ export const createQueueClient = async ({
   storageAccountName,
   queueName = DEFAULT_QUEUE_NAME,
   credential,
+  connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING,
 }) => {
-  if (!storageAccountName) {
-    throw new Error("Missing AZURE_STORAGE_ACCOUNT_NAME for worker dispatch");
+  const { QueueServiceClient, QueueClient } = await import("@azure/storage-queue");
+
+  if (connectionString) {
+    return QueueServiceClient.fromConnectionString(connectionString).getQueueClient(queueName);
   }
 
-  const [{ DefaultAzureCredential }, { QueueClient }] = await Promise.all([
-    import("@azure/identity"),
-    import("@azure/storage-queue"),
-  ]);
+  if (!storageAccountName) {
+    throw new Error("Missing AZURE_STORAGE_ACCOUNT_NAME or AZURE_STORAGE_CONNECTION_STRING for worker dispatch");
+  }
+
+  const { DefaultAzureCredential } = await import("@azure/identity");
 
   return new QueueClient(
     `https://${storageAccountName}.queue.core.windows.net/${queueName}`,
