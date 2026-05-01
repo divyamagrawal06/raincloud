@@ -106,7 +106,7 @@ async function handleUploads(request, response) {
     const containerClient = blobServiceClient.getContainerClient(inputsContainer);
 
     await new Promise((resolve, reject) => {
-      const bb = busboy({ headers: request.headers });
+      const bb = busboy({ headers: request.headers, limits: { fileSize: 50 * 1024 * 1024 } });
       const uploadPromises = [];
       let fileIndex = 0;
       let tooManyFiles = false;
@@ -144,7 +144,7 @@ async function handleUploads(request, response) {
             stream.on("end", async () => {
               try {
                 const buffer = Buffer.concat(chunks);
-                if (buffer.byteLength > 50 * 1024 * 1024) {
+                if (stream.truncated) {
                   const e = new Error(`File "${displayName}" exceeds the 50 MB limit`);
                   e.statusCode = 400;
                   rej(e);
@@ -336,6 +336,8 @@ async function handleApprove(request, response) {
 
   const now = new Date().toISOString();
 
+  await enqueueApprovedWorkerRun({ payload });
+
   saveRun({
     id: runId,
     taskId,
@@ -351,8 +353,6 @@ async function handleApprove(request, response) {
   });
 
   updateTaskStatus(taskId, "queued");
-
-  await enqueueApprovedWorkerRun({ payload });
 
   sendJson(response, 202, { status: "queued", taskId, runId, planId });
 }
@@ -378,6 +378,16 @@ async function handleWorkerEvent(request, response, [runId]) {
     return;
   }
 
+  const runRecord = getRun(runId);
+  if (!runRecord) {
+    sendJson(response, 404, { error: "Run not found" });
+    return;
+  }
+  if (event.taskId !== runRecord.taskId) {
+    sendJson(response, 400, { error: "event.taskId does not match run record" });
+    return;
+  }
+
   // Idempotency: return 200 so the worker deletes the queue message on retry.
   if (isEventProcessed(runId, event.id)) {
     sendJson(response, 200, { status: "duplicate" });
@@ -398,8 +408,7 @@ async function handleWorkerEvent(request, response, [runId]) {
       updatedArtifactIds.push(event.artifact.id);
     }
     updateTaskStatus(taskId, "running", { artifactIds: updatedArtifactIds });
-    const run = getRun(runId);
-    if (run && !run.startedAt) {
+    if (!runRecord.startedAt) {
       updateRunStatus(runId, "running", { startedAt: event.occurredAt });
     }
   } else if (kind === "run_succeeded") {
@@ -460,7 +469,7 @@ async function handleArtifactDownload(_request, response, [artifactId]) {
   response.writeHead(200, {
     "content-type": "application/pdf",
     "content-length": String(buffer.byteLength),
-    "content-disposition": `attachment; filename="${artifact.name}"`,
+    "content-disposition": `attachment; filename="${String(artifact.name ?? "file.pdf").replace(/["\\\r\n]/g, "_")}"`,
     ...CORS_HEADERS,
   });
   response.end(buffer);

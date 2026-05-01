@@ -21,6 +21,8 @@ const artifacts = new Map();
 const artifactsByTask = new Map(); // taskId -> artifactId[]
 
 // idempotency for worker events
+// TODO: this Set is never pruned — entries accumulate for the lifetime of the process.
+// When migrating to Supabase, use a table with a TTL or a periodic cleanup job instead.
 const processedEvents = new Set(); // "${runId}:${eventId}"
 
 // ---- tasks ----
