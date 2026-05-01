@@ -294,6 +294,11 @@ async function handleApprove(request, response) {
     return;
   }
 
+  if (planRecord.taskId !== taskId) {
+    sendJson(response, 400, { error: "planId does not belong to the specified taskId" });
+    return;
+  }
+
   if (planRecord.status !== "proposed") {
     sendJson(response, 409, { error: `Plan is already ${planRecord.status}` });
     return;
@@ -464,15 +469,25 @@ async function handleArtifactDownload(_request, response, [artifactId]) {
 
   const blobServiceClient = await getBlobServiceClient();
   const blobClient = blobServiceClient.getContainerClient(container).getBlobClient(blobName);
-  const buffer = await blobClient.downloadToBuffer();
+  const downloadResponse = await blobClient.download();
+  const readableStream = downloadResponse.readableStreamBody;
 
-  response.writeHead(200, {
+  if (!readableStream) {
+    sendJson(response, 500, { error: "Blob stream unavailable" });
+    return;
+  }
+
+  const safeName = String(artifact.name ?? "file.pdf").replace(/["\\\r\n]/g, "_");
+  const responseHeaders = {
     "content-type": "application/pdf",
-    "content-length": String(buffer.byteLength),
-    "content-disposition": `attachment; filename="${String(artifact.name ?? "file.pdf").replace(/["\\\r\n]/g, "_")}"`,
+    "content-disposition": `attachment; filename="${safeName}"`,
     ...CORS_HEADERS,
-  });
-  response.end(buffer);
+  };
+  if (downloadResponse.contentLength != null) {
+    responseHeaders["content-length"] = String(downloadResponse.contentLength);
+  }
+  response.writeHead(200, responseHeaders);
+  readableStream.pipe(response);
 }
 
 // ---- server lifecycle ----
