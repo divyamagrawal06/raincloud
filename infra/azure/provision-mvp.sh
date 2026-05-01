@@ -43,6 +43,15 @@ require_command() {
   command -v "$1" >/dev/null 2>&1 || die "Missing required command: $1"
 }
 
+az_file_path() {
+  if command -v wslpath >/dev/null 2>&1 && [[ "$1" == /* ]]; then
+    wslpath -w "$1"
+    return
+  fi
+
+  printf '%s' "$1"
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --resource-group)
@@ -89,7 +98,7 @@ if ! az account show >/dev/null 2>&1; then
   die "Azure CLI is not logged in. Run: az login"
 fi
 
-SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
+SUBSCRIPTION_ID="$(az account show --query id -o tsv | tr -d '\r')"
 
 if [[ -z "$STORAGE_ACCOUNT_NAME" ]]; then
   SUBSCRIPTION_SUFFIX="$(printf '%s' "$SUBSCRIPTION_ID" | tr -d '-' | tr '[:upper:]' '[:lower:]' | cut -c1-8)"
@@ -110,9 +119,10 @@ az group create \
   --output none
 
 echo "Deploying storage handoff resources: $STORAGE_ACCOUNT_NAME"
+TEMPLATE_FILE="$(az_file_path "$SCRIPT_DIR/main.bicep")"
 az deployment group create \
   --resource-group "$RESOURCE_GROUP" \
-  --template-file "$SCRIPT_DIR/main.bicep" \
+  --template-file "$TEMPLATE_FILE" \
   --parameters \
     location="$LOCATION" \
     storageAccountName="$STORAGE_ACCOUNT_NAME" \
@@ -125,10 +135,10 @@ STORAGE_ACCOUNT_ID="$(az storage account show \
   --resource-group "$RESOURCE_GROUP" \
   --name "$STORAGE_ACCOUNT_NAME" \
   --query id \
-  -o tsv)"
+  -o tsv | tr -d '\r')"
 
 if [[ "$ASSIGN_ROLES" == "1" ]]; then
-  ASSIGNEE_OBJECT_ID="$(az ad signed-in-user show --query id -o tsv 2>/dev/null || true)"
+  ASSIGNEE_OBJECT_ID="$(az ad signed-in-user show --query id -o tsv 2>/dev/null | tr -d '\r' || true)"
 
   if [[ -n "$ASSIGNEE_OBJECT_ID" ]]; then
     for ROLE in "Storage Queue Data Contributor" "Storage Blob Data Contributor"; do

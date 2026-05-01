@@ -14,6 +14,7 @@ test("Azure CLI provision script creates MVP handoff resources with login auth",
 
   assert.match(provision, /^#!\/usr\/bin\/env bash/);
   assert.match(provision, /az account show/);
+  assert.match(provision, /wslpath -w/);
   assert.match(provision, /az group create/);
   assert.match(provision, /az deployment group create/);
   assert.match(provision, /main\.bicep/);
@@ -53,10 +54,73 @@ test("Azure CLI enqueue script sends approved worker payload without raw secrets
   assert.match(enqueue, /az storage message put/);
   assert.match(enqueue, /--auth-mode login/);
   assert.match(enqueue, /callback\.secretRef/);
-  assert.match(enqueue, /RAINCLOUD_WORKER_CALLBACK_SECRET/);
+  assert.match(enqueue, /env-var name, not the secret value/);
   assert.doesNotMatch(enqueue, /AZURE_CLIENT_SECRET/);
   assert.doesNotMatch(enqueue, /connection-string/);
   assert.doesNotMatch(enqueue, /account-key/);
+});
+
+test("Azure worker deployment script builds a cost-bounded manual Container Apps Job", () => {
+  const deployPath = "infra/azure/deploy-worker-job.sh";
+
+  assert.equal(existsSync(deployPath), true);
+
+  const deploy = readText(deployPath);
+
+  assert.match(deploy, /^#!\/usr\/bin\/env bash/);
+  assert.match(deploy, /az provider register/);
+  assert.match(deploy, /az acr create/);
+  assert.match(deploy, /--sku Basic/);
+  assert.match(deploy, /az acr build/);
+  assert.match(deploy, /wslpath -w/);
+  assert.match(deploy, /tr -d '\\r'/);
+  assert.match(deploy, /az rest/);
+  assert.match(deploy, /actual_GreaterThan_80_Percent/);
+  assert.match(deploy, /actual_GreaterThan_100_Percent/);
+  assert.match(deploy, /az containerapp env create/);
+  assert.match(deploy, /--logs-destination none/);
+  assert.match(deploy, /az containerapp job create/);
+  assert.match(deploy, /--trigger-type Manual/);
+  assert.match(deploy, /--mi-system-assigned/);
+  assert.match(deploy, /--registry-identity system/);
+  assert.match(deploy, /Storage Queue Data Contributor/);
+  assert.match(deploy, /Storage Blob Data Contributor/);
+  assert.doesNotMatch(deploy, /AZURE_CLIENT_SECRET/);
+  assert.doesNotMatch(deploy, /connection-string/);
+  assert.doesNotMatch(deploy, /account-key/);
+});
+
+test("Docker build context excludes local dependency and generated output folders", () => {
+  const dockerignorePath = ".dockerignore";
+
+  assert.equal(existsSync(dockerignorePath), true);
+
+  const dockerignore = readText(dockerignorePath);
+
+  assert.match(dockerignore, /^node_modules$/m);
+  assert.match(dockerignore, /^\*\*\/node_modules$/m);
+  assert.match(dockerignore, /^\.tmp$/m);
+  assert.match(dockerignore, /^graphify-out$/m);
+});
+
+test("Azure smoke script seeds PDFs, enqueues the task, runs the job, and downloads the output", () => {
+  const smokePath = "infra/azure/run-pdf-merge-smoke.sh";
+
+  assert.equal(existsSync(smokePath), true);
+
+  const smoke = readText(smokePath);
+
+  assert.match(smoke, /^#!\/usr\/bin\/env bash/);
+  assert.match(smoke, /npm --workspace @raincloud\/worker run seed:pdf-merge/);
+  assert.match(smoke, /enqueue-worker-run\.sh/);
+  assert.match(smoke, /az containerapp job start/);
+  assert.match(smoke, /az containerapp job execution list/);
+  assert.match(smoke, /az storage blob download/);
+  assert.match(smoke, /wslpath -w/);
+  assert.match(smoke, /--auth-mode login/);
+  assert.match(smoke, /merged-q1-q3-q2-q4-packet\.pdf/);
+  assert.doesNotMatch(smoke, /connection-string/);
+  assert.doesNotMatch(smoke, /account-key/);
 });
 
 test("sample PDF merge worker payload captures the first cloud smoke task", () => {
@@ -98,7 +162,8 @@ test("Azure CLI MVP deployment docs explain local CLI auth and the smoke path", 
   const doc = readText(docPath);
 
   assert.match(doc, /az login/);
-  assert.match(doc, /infra\/azure\/provision-mvp\.sh/);
+  assert.match(doc, /infra\/azure\/deploy-worker-job\.sh/);
+  assert.match(doc, /infra\/azure\/run-pdf-merge-smoke\.sh/);
   assert.match(doc, /infra\/azure\/enqueue-worker-run\.sh/);
   assert.match(doc, /fixtures\/worker-runs\/pdf-merge-seven-pdfs\.approved\.json/);
   assert.match(doc, /RAINCLOUD_WORKER_CALLBACK_SECRET/);

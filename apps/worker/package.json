@@ -1,0 +1,18 @@
+{
+  "name": "@raincloud/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/worker.mjs",
+  "scripts": {
+    "build": "node --check src/worker.mjs && node --check scripts/seed-pdf-merge-inputs.mjs",
+    "start": "node src/worker.mjs",
+    "seed:pdf-merge": "node scripts/seed-pdf-merge-inputs.mjs"
+  },
+  "dependencies": {
+    "@azure/identity": "^4.13.0",
+    "@azure/storage-blob": "^12.29.1",
+    "@azure/storage-queue": "^12.28.1",
+    "pdf-lib": "^1.17.1"
+  }
+}

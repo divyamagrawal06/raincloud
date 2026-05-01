@@ -112,10 +112,6 @@ if (Object.prototype.hasOwnProperty.call(payload.callback, "secret")) {
   throw new Error("payload.callback must not include a raw secret");
 }
 
-if (Object.prototype.hasOwnProperty.call(payload.callback, "secret")) {
-  throw new Error("payload.callback must not include a raw secret");
-}
-
 process.stdout.write(JSON.stringify(payload));
 ' "$PAYLOAD_FILE")"
 
