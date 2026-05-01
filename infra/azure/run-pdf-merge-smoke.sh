@@ -15,7 +15,7 @@ SMOKE_CALLBACK_SECRET="${RAINCLOUD_WORKER_SMOKE_CALLBACK_SECRET:-raincloud-smoke
 SEED_DIR=".tmp/pdf-merge-inputs"
 OUTPUT_FILE=".tmp/merged-q1-q3-q2-q4-packet.pdf"
 OUTPUT_CONTAINER="outputs"
-OUTPUT_BLOB_NAME="outputs/task_pdf_merge_smoke_001/run_pdf_merge_smoke_001/merged-q1-q3-q2-q4-packet.pdf"
+OUTPUT_FILE_WAS_SET=0
 
 usage() {
   cat <<'USAGE'
@@ -100,6 +100,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     --output)
       OUTPUT_FILE="${2:-}"
+      OUTPUT_FILE_WAS_SET=1
       shift 2
       ;;
     -h|--help)
@@ -142,6 +143,30 @@ fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 fs.writeFileSync(outputPath, `${JSON.stringify(payload, null, 2)}\n`);
 ' "$PAYLOAD_FILE_FOR_NODE" "$SMOKE_PAYLOAD_FILE_FOR_NODE" "$SMOKE_CALLBACK_URL"
 
+OUTPUT_BLOB_NAME="$("$NODE_BIN" -e '
+const fs = require("node:fs");
+const payload = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+const prefix = `${payload.artifactDestination?.prefix ?? ""}`
+  .replaceAll("\\", "/")
+  .replace(/^\/+/, "")
+  .replace(/\/?$/, "/");
+const artifactName = `${payload.approvedPlan?.expectedArtifacts?.[0]?.name ?? "merged.pdf"}`
+  .trim()
+  .replaceAll("\\", "-")
+  .replaceAll("/", "-");
+
+if (!prefix || prefix.includes("..") || !artifactName) {
+  throw new Error("approved payload has an invalid output artifact destination");
+}
+
+process.stdout.write(`${prefix}${artifactName}`);
+' "$SMOKE_PAYLOAD_FILE_FOR_NODE")"
+
+if [[ "$OUTPUT_FILE_WAS_SET" == "0" ]]; then
+  OUTPUT_FILE=".tmp/$(basename "$OUTPUT_BLOB_NAME")"
+fi
+mkdir -p "$(dirname "$OUTPUT_FILE")"
+
 AZ_SEED_DIR="$(az_file_path "$REPO_ROOT/$SEED_DIR")"
 az storage blob upload-batch \
   --account-name "$STORAGE_ACCOUNT_NAME" \
@@ -157,9 +182,18 @@ bash "$SCRIPT_DIR/enqueue-worker-run.sh" \
   --payload "$SMOKE_PAYLOAD_FILE" \
   --ttl-seconds 3600 >/dev/null
 
+JOB_IMAGE="$(az containerapp job show \
+  --resource-group "$RESOURCE_GROUP" \
+  --name "$JOB_NAME" \
+  --query properties.template.containers[0].image \
+  -o tsv | tr -d '\r')"
+
+[[ -n "$JOB_IMAGE" ]] || die "Container Apps Job is missing a configured image: $JOB_NAME"
+
 EXECUTION_NAME="$(az containerapp job start \
   --resource-group "$RESOURCE_GROUP" \
   --name "$JOB_NAME" \
+  --image "$JOB_IMAGE" \
   --env-vars \
     AZURE_STORAGE_ACCOUNT_NAME="$STORAGE_ACCOUNT_NAME" \
     AZURE_STORAGE_QUEUE_NAME="$QUEUE_NAME" \
