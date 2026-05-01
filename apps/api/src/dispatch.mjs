@@ -63,7 +63,6 @@ export const enqueueApprovedWorkerRun = async ({
 
   const messageText = serializeApprovedWorkerPayload(payload);
   const response = await client.sendMessage(messageText, {
-    timeToLive,
     messageTimeToLive: timeToLive,
   });
 
