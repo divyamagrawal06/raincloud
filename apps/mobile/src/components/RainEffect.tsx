@@ -1,15 +1,5 @@
-import { useEffect, useMemo } from 'react';
-import { useWindowDimensions } from 'react-native';
-import Animated, {
-  cancelAnimation,
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
+import { useEffect, useMemo, useRef } from 'react';
+import { Animated, Easing, StyleSheet, View, useWindowDimensions } from 'react-native';
 
 const DROP_COUNT = 60;
 
@@ -27,73 +17,72 @@ type DropConfig = {
   width: number;
 };
 
-function RainDrop({
-  config,
-  screenHeight,
-}: {
-  config: DropConfig;
-  screenHeight: number;
-}) {
-  const translateY = useSharedValue(-120);
-  const opacity = useSharedValue(0);
+function RainDrop({ config, screenHeight }: { config: DropConfig; screenHeight: number }) {
+  const translateY = useRef(new Animated.Value(-120)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    translateY.setValue(-120);
+    opacity.setValue(0);
+
     const fadeDuration = config.duration * 0.12;
     const holdDuration = config.duration * 0.78;
     const fadeOutDuration = config.duration * 0.1;
 
-    translateY.value = -120;
-    opacity.value = 0;
+    const fallAnim = Animated.loop(
+      Animated.timing(translateY, {
+        toValue: screenHeight + 120,
+        duration: config.duration,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+    );
 
-    translateY.value = withDelay(
-      config.delay,
-      withRepeat(
-        withTiming(screenHeight + 120, {
-          duration: config.duration,
-          easing: Easing.linear,
+    const opacityAnim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: config.opacity,
+          duration: fadeDuration,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
         }),
-        -1,
-        false,
-      ),
+        Animated.timing(opacity, {
+          toValue: config.opacity,
+          duration: holdDuration,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: fadeOutDuration,
+          useNativeDriver: true,
+        }),
+      ]),
     );
 
-    opacity.value = withDelay(
-      config.delay,
-      withRepeat(
-        withSequence(
-          withTiming(config.opacity, { duration: fadeDuration, easing: Easing.out(Easing.quad) }),
-          withTiming(config.opacity, { duration: holdDuration }),
-          withTiming(0, { duration: fadeOutDuration }),
-        ),
-        -1,
-        false,
-      ),
-    );
+    const timeout = setTimeout(() => {
+      Animated.parallel([fallAnim, opacityAnim]).start();
+    }, config.delay);
+
     return () => {
-      cancelAnimation(translateY);
-      cancelAnimation(opacity);
+      clearTimeout(timeout);
+      fallAnim.stop();
+      opacityAnim.stop();
     };
   }, [config, screenHeight]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }, { rotate: '-12deg' }],
-    opacity: opacity.value,
-  }));
-
   return (
     <Animated.View
-      style={[
-        {
-          position: 'absolute',
-          left: config.x,
-          top: 0,
-          width: config.width,
-          height: config.height,
-          backgroundColor: 'rgba(173,198,255,0.9)',
-          borderRadius: 999,
-        },
-        animatedStyle,
-      ]}
+      style={{
+        position: 'absolute',
+        left: config.x,
+        top: 0,
+        width: config.width,
+        height: config.height,
+        backgroundColor: 'rgba(173,198,255,0.9)',
+        borderRadius: 999,
+        transform: [{ translateY }, { rotate: '-12deg' }],
+        opacity,
+      }}
     />
   );
 }
@@ -101,33 +90,24 @@ function RainDrop({
 export function RainEffect() {
   const { width, height } = useWindowDimensions();
 
-  const drops = useMemo<DropConfig[]>(() =>
-    Array.from({ length: DROP_COUNT }, (_, i) => ({
-      x: seededRandom(i * 3) * width,
-      duration: 700 + seededRandom(i * 7) * 600,
-      delay: seededRandom(i * 11) * 2000,
-      opacity: 0.25 + seededRandom(i * 13) * 0.3,
-      height: 60 + seededRandom(i * 17) * 30,
-      width: 1 + seededRandom(i * 19) * 1,
-    })),
-  [width]);
+  const drops = useMemo<DropConfig[]>(
+    () =>
+      Array.from({ length: DROP_COUNT }, (_, i) => ({
+        x: seededRandom(i * 3) * width,
+        duration: 700 + seededRandom(i * 7) * 600,
+        delay: seededRandom(i * 11) * 2000,
+        opacity: 0.25 + seededRandom(i * 13) * 0.3,
+        height: 60 + seededRandom(i * 17) * 30,
+        width: 1 + seededRandom(i * 19) * 1,
+      })),
+    [width],
+  );
 
   return (
-    <Animated.View
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        overflow: 'hidden',
-        zIndex: 1,
-      }}
-      pointerEvents="none"
-    >
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
       {drops.map((config, i) => (
         <RainDrop key={i} config={config} screenHeight={height} />
       ))}
-    </Animated.View>
+    </View>
   );
 }
