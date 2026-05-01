@@ -88,7 +88,13 @@ export function TaskDetailScreen({ taskId, activeTab, onTabPress, onBack, onTask
         // Fall back to fixture data for demo/mock tasks
         if (!active) return;
         const fixture = buildFixtureResponse(taskId);
-        if (fixture) setTaskData(fixture);
+        if (fixture) {
+          setTaskData(fixture);
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
+        }
       } finally {
         if (active) setLoading(false);
       }
