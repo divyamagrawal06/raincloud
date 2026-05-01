@@ -1,0 +1,118 @@
+{
+  "runId": "run_pdf_merge_smoke_001",
+  "taskId": "task_pdf_merge_smoke_001",
+  "approvedPlanId": "plan_pdf_merge_smoke_001",
+  "approvedPlan": {
+    "id": "plan_pdf_merge_smoke_001",
+    "taskId": "task_pdf_merge_smoke_001",
+    "status": "approved",
+    "lane": "pdf_merge",
+    "goal": "Merge seven PDF attachments into one returned PDF after applying the clarified ordering request.",
+    "assumptions": [
+      "The user approved Q3 Report.pdf before Q2 Report.pdf.",
+      "All source files are PDFs already uploaded to the inputs container."
+    ],
+    "requiredInputs": [
+      "Seven uploaded PDF attachments"
+    ],
+    "requiredPermissions": [
+      "Read scoped input blobs",
+      "Write one output PDF artifact"
+    ],
+    "steps": [
+      "Validate that each scoped input is a readable PDF.",
+      "Merge the PDFs in the approved order.",
+      "Upload the merged PDF to the requested artifact destination.",
+      "Report the uploaded artifact and final run status to the callback URL."
+    ],
+    "expectedArtifacts": [
+      {
+        "kind": "pdf",
+        "name": "merged-q1-q3-q2-q4-packet.pdf",
+        "description": "One merged PDF containing the approved seven-file order."
+      }
+    ],
+    "estimate": {
+      "creditMin": 1,
+      "creditMax": 2,
+      "runtimeSecondsMin": 10,
+      "runtimeSecondsMax": 300,
+      "limits": [
+        {
+          "key": "max_input_files",
+          "label": "Maximum input PDFs",
+          "value": "7"
+        },
+        {
+          "key": "max_runtime_seconds",
+          "label": "Maximum worker runtime",
+          "value": "300"
+        }
+      ]
+    },
+    "risks": [
+      "Corrupt, encrypted, or non-PDF inputs should fail with a user-safe explanation."
+    ],
+    "createdAt": "2026-05-01T00:00:00.000Z",
+    "approvedAt": "2026-05-01T00:05:00.000Z"
+  },
+  "inputs": [
+    {
+      "attachmentId": "att_cover",
+      "kind": "pdf",
+      "blobKey": "inputs/task_pdf_merge_smoke_001/cover.pdf",
+      "displayName": "Cover.pdf",
+      "mimeType": "application/pdf"
+    },
+    {
+      "attachmentId": "att_q1",
+      "kind": "pdf",
+      "blobKey": "inputs/task_pdf_merge_smoke_001/q1-report.pdf",
+      "displayName": "Q1 Report.pdf",
+      "mimeType": "application/pdf"
+    },
+    {
+      "attachmentId": "att_q3",
+      "kind": "pdf",
+      "blobKey": "inputs/task_pdf_merge_smoke_001/q3-report.pdf",
+      "displayName": "Q3 Report.pdf",
+      "mimeType": "application/pdf"
+    },
+    {
+      "attachmentId": "att_q2",
+      "kind": "pdf",
+      "blobKey": "inputs/task_pdf_merge_smoke_001/q2-report.pdf",
+      "displayName": "Q2 Report.pdf",
+      "mimeType": "application/pdf"
+    },
+    {
+      "attachmentId": "att_q4",
+      "kind": "pdf",
+      "blobKey": "inputs/task_pdf_merge_smoke_001/q4-report.pdf",
+      "displayName": "Q4 Report.pdf",
+      "mimeType": "application/pdf"
+    },
+    {
+      "attachmentId": "att_appendix_a",
+      "kind": "pdf",
+      "blobKey": "inputs/task_pdf_merge_smoke_001/appendix-a.pdf",
+      "displayName": "Appendix A.pdf",
+      "mimeType": "application/pdf"
+    },
+    {
+      "attachmentId": "att_appendix_b",
+      "kind": "pdf",
+      "blobKey": "inputs/task_pdf_merge_smoke_001/appendix-b.pdf",
+      "displayName": "Appendix B.pdf",
+      "mimeType": "application/pdf"
+    }
+  ],
+  "artifactDestination": {
+    "container": "outputs",
+    "prefix": "outputs/task_pdf_merge_smoke_001/run_pdf_merge_smoke_001/"
+  },
+  "callback": {
+    "url": "https://api.example.test/internal/worker-runs/run_pdf_merge_smoke_001/events",
+    "secretRef": "RAINCLOUD_WORKER_CALLBACK_SECRET"
+  }
+}
