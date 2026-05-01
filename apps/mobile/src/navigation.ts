@@ -1,7 +1,7 @@
 export type Route =
   | { name: 'home' }
   | { name: 'tasks' }
-  | { name: 'task-detail'; taskId: string }
+  | { name: 'task-detail'; taskId: string; from: 'tasks' | 'notifications' }
   | { name: 'notifications' }
   | { name: 'profile' };
 

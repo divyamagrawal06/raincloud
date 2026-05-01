@@ -8,6 +8,7 @@ import { RainEffect } from '../components/RainEffect';
 import { MOCK_NOTIFICATIONS } from '../fixtures';
 import type { Route } from '../navigation';
 import { colors, fonts, spacing, typography } from '../theme';
+import { timeAgo } from '../utils/timeAgo';
 
 type NotifKind = (typeof MOCK_NOTIFICATIONS)[number]['kind'];
 
@@ -19,14 +20,6 @@ const KIND_META: Record<NotifKind, { icon: IoniconName; color: string }> = {
   task_running:   { icon: 'play-circle',         color: '#007AFF' },
   plan_ready:     { icon: 'clipboard',           color: '#fbbf24' },
 };
-
-function timeAgo(iso: string): string {
-  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (diff < 60) return 'just now';
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
-}
 
 type Props = {
   activeTab: number;
@@ -72,7 +65,7 @@ export function NotificationsScreen({ activeTab, onTabPress, onNavigate }: Props
                   {i > 0 && <View style={styles.divider} />}
                   <TouchableOpacity
                     style={styles.notifRow}
-                    onPress={() => n.taskId && onNavigate({ name: 'task-detail', taskId: n.taskId })}
+                    onPress={() => n.taskId && onNavigate({ name: 'task-detail', taskId: n.taskId, from: 'notifications' })}
                     activeOpacity={0.7}
                   >
                     <View style={[styles.iconWrap, { backgroundColor: `${color}22` }]}>

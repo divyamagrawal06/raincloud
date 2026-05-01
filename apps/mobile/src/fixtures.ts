@@ -208,3 +208,8 @@ export const MOCK_NOTIFICATIONS = [
     read: true,
   },
 ];
+
+/** Failure reasons for failed tasks, keyed by task ID. */
+export const MOCK_FAILURE_REASONS: Record<string, string> = {
+  'task-5': 'Video file exceeds the 2 GB size limit. Split into shorter segments and resubmit.',
+};

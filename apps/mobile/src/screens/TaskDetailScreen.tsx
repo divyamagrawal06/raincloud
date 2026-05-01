@@ -8,7 +8,7 @@ import { GlassCard } from '../components/GlassCard';
 import { LaneTag } from '../components/LaneTag';
 import { RainEffect } from '../components/RainEffect';
 import { StatusChip } from '../components/StatusChip';
-import { MOCK_ARTIFACTS, MOCK_PLANS, MOCK_TASKS } from '../fixtures';
+import { MOCK_ARTIFACTS, MOCK_FAILURE_REASONS, MOCK_PLANS, MOCK_TASKS } from '../fixtures';
 import { colors, fonts, radii, spacing, typography } from '../theme';
 
 type Props = {
@@ -108,9 +108,9 @@ export function TaskDetailScreen({ taskId, activeTab, onTabPress, onBack }: Prop
               {isRunning && (
                 <Text style={styles.statusSub}>Milestones will appear here as the job progresses.</Text>
               )}
-              {isFailed && (
+              {isFailed && MOCK_FAILURE_REASONS[task.id] && (
                 <Text style={[styles.statusSub, { color: '#f87171' }]}>
-                  Video exceeded the 2 GB size limit. Split the file and try again.
+                  {MOCK_FAILURE_REASONS[task.id]}
                 </Text>
               )}
             </View>
@@ -183,7 +183,7 @@ export function TaskDetailScreen({ taskId, activeTab, onTabPress, onBack }: Prop
         {isPlanReview && (
           <TouchableOpacity style={styles.approveBtn} activeOpacity={0.85}>
             <Ionicons name="play" size={18} color="#fff" />
-            <Text style={styles.approveBtnLabel}>Approve &amp; Run</Text>
+            <Text style={styles.approveBtnLabel}>Approve & Run</Text>
           </TouchableOpacity>
         )}
 

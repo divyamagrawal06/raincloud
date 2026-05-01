@@ -64,7 +64,7 @@ export function ProfileScreen({ activeTab, onTabPress }: Props) {
             </View>
             <View>
               <Text style={styles.userName}>Divya Agrawal</Text>
-              <Text style={styles.userEmail}>ludicrouslytrue@gmail.com</Text>
+              <Text style={styles.userEmail}>user@example.com</Text>
             </View>
           </View>
         </GlassCard>

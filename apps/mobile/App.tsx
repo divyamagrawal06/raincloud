@@ -59,7 +59,7 @@ export default function App() {
           taskId={route.taskId}
           activeTab={activeTab}
           onTabPress={handleTabPress}
-          onBack={() => setRoute({ name: 'tasks' })}
+          onBack={() => setRoute(route.from === 'notifications' ? { name: 'notifications' } : { name: 'tasks' })}
         />
       )}
       {route.name === 'notifications' && (

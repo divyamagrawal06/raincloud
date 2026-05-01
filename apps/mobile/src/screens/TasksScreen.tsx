@@ -12,6 +12,7 @@ import { StatusChip } from '../components/StatusChip';
 import { MOCK_TASKS } from '../fixtures';
 import type { Route } from '../navigation';
 import { colors, fonts, spacing, typography } from '../theme';
+import { timeAgo } from '../utils/timeAgo';
 
 type Filter = 'all' | 'active' | 'done';
 
@@ -23,14 +24,6 @@ const FILTERS: { key: Filter; label: string }[] = [
 
 const ACTIVE_STATUSES: TaskStatus[] = ['clarifying', 'plan_review', 'queued', 'planning', 'running', 'needs_input'];
 const DONE_STATUSES: TaskStatus[] = ['succeeded', 'failed', 'canceled'];
-
-function timeAgo(iso: string): string {
-  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (diff < 60) return 'just now';
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
-}
 
 function TaskCard({ task, onPress }: { task: Task; onPress: () => void }) {
   return (
@@ -110,7 +103,7 @@ export function TasksScreen({ activeTab, onTabPress, onNavigate }: Props) {
               <TaskCard
                 key={task.id}
                 task={task}
-                onPress={() => onNavigate({ name: 'task-detail', taskId: task.id })}
+                onPress={() => onNavigate({ name: 'task-detail', taskId: task.id, from: 'tasks' })}
               />
             ))}
           </View>
