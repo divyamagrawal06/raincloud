@@ -6,8 +6,8 @@ const workspaceRoot = path.resolve(projectRoot, '../..');
 
 const config = getDefaultConfig(projectRoot);
 
-// Let Metro see the entire monorepo
-config.watchFolders = [workspaceRoot];
+// Let Metro see the entire monorepo (merge with Expo defaults, not replace)
+config.watchFolders = [...(config.watchFolders ?? []), workspaceRoot];
 
 // Prefer app-local node_modules, then fall back to workspace root
 config.resolver.nodeModulesPaths = [
