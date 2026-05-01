@@ -117,8 +117,10 @@ process.stdout.write(JSON.stringify(payload));
 
 MESSAGE_BYTES="$(printf '%s' "$MESSAGE_CONTENT" | wc -c | tr -d ' ')"
 
-if (( MESSAGE_BYTES > 65536 )); then
-  die "Queue message is $MESSAGE_BYTES bytes; Azure Storage Queue messages must be <= 65536 bytes"
+# Azure stores messages base64-encoded; enforce the limit on the encoded size (~49152 raw bytes).
+MAX_RAW_BYTES=$(( 65536 * 3 / 4 ))
+if (( MESSAGE_BYTES > MAX_RAW_BYTES )); then
+  die "Queue message is $MESSAGE_BYTES bytes; base64-encoded it would exceed Azure's 65536-byte limit (max raw: $MAX_RAW_BYTES bytes)"
 fi
 
 az storage message put \
