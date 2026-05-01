@@ -210,6 +210,22 @@ const duplicateRun: WorkerRunClaimResult = {
 
 void duplicateRun;
 
+const duplicatePlanningRun: WorkerRunClaimResult = {
+  runId: "run_1",
+  status: "duplicate",
+  workerRunStatus: "planning",
+};
+
+void duplicatePlanningRun;
+
+const duplicateNeedsInputRun: WorkerRunClaimResult = {
+  runId: "run_1",
+  status: "duplicate",
+  workerRunStatus: "needs_input",
+};
+
+void duplicateNeedsInputRun;
+
 const shortTextQuestion: ClarifyingQuestion = {
   id: "question_1",
   taskId: "task_1",
