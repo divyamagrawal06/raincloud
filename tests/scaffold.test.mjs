@@ -70,6 +70,7 @@ test("root env example documents cloud dispatch configuration", () => {
     "RAINCLOUD_WORKER_SMOKE_CALLBACK_URL",
     "RAINCLOUD_WORKER_SMOKE_CALLBACK_SECRET",
     "OPENAI_API_KEY",
+    "RAINCLOUD_OPENAI_MODEL",
     "SUPABASE_URL",
     "SUPABASE_SERVICE_ROLE_KEY",
     "SUPABASE_ANON_KEY",
