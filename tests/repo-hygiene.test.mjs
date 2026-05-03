@@ -6,6 +6,6 @@ test(".gitignore excludes local tooling and generated output", () => {
   const gitignore = readFileSync(".gitignore", "utf8");
 
   assert.match(gitignore, /^graphify-out\/$/m);
-  assert.match(gitignore, /^docs\/diagrams\/$/m);
+  assert.match(gitignore, /^\/docs\/$/m);
   assert.match(gitignore, /^\/scripts\/$/m);
 });
