@@ -6,6 +6,6 @@ node_modules
 dist
 packages/*/dist
 graphify-out
-docs/diagrams
+docs
 /scripts
 npm-debug.log*

@@ -109,7 +109,7 @@ test("Docker build context excludes local dependency and generated output folder
   assert.match(dockerignore, /^\*\*\/node_modules$/m);
   assert.match(dockerignore, /^\.tmp$/m);
   assert.match(dockerignore, /^graphify-out$/m);
-  assert.match(dockerignore, /^docs\/diagrams$/m);
+  assert.match(dockerignore, /^docs$/m);
   assert.match(dockerignore, /^\/scripts$/m);
 });
 
@@ -172,20 +172,28 @@ test("sample PDF merge worker payload captures the first cloud smoke task", () =
   assert.equal(Object.hasOwn(payload.callback, "secret"), false);
 });
 
-test("Azure CLI MVP deployment docs explain local CLI auth and the smoke path", () => {
-  const docPath = "docs/deployment/azure-cli-mvp.md";
+test("Azure infra scripts explain local CLI auth and the PDF merge smoke path", () => {
+  const provisionPath = "infra/azure/provision-mvp.sh";
+  const smokePath = "infra/azure/run-pdf-merge-smoke.sh";
+  const enqueuePath = "infra/azure/enqueue-worker-run.sh";
+  const deployPath = "infra/azure/deploy-worker-job.sh";
 
-  assert.equal(existsSync(docPath), true);
+  assert.equal(existsSync(provisionPath), true);
+  assert.equal(existsSync(smokePath), true);
+  assert.equal(existsSync(enqueuePath), true);
+  assert.equal(existsSync(deployPath), true);
 
-  const doc = readText(docPath);
+  const provision = readText(provisionPath);
+  const smoke = readText(smokePath);
+  const enqueue = readText(enqueuePath);
+  const deploy = readText(deployPath);
 
-  assert.match(doc, /az login/);
-  assert.match(doc, /infra\/azure\/deploy-worker-job\.sh/);
-  assert.match(doc, /infra\/azure\/run-pdf-merge-smoke\.sh/);
-  assert.match(doc, /infra\/azure\/enqueue-worker-run\.sh/);
-  assert.match(doc, /fixtures\/worker-runs\/pdf-merge-seven-pdfs\.approved\.json/);
-  assert.match(doc, /\.tmp\/pdf-merge-smoke-payload\.approved\.json/);
-  assert.match(doc, /RAINCLOUD_WORKER_CALLBACK_SECRET/);
-  assert.match(doc, /RAINCLOUD_WORKER_SMOKE_CALLBACK_URL/);
-  assert.match(doc, /raw secret/i);
+  assert.match(provision, /az login/);
+  assert.match(deploy, /infra\/azure\/deploy-worker-job\.sh/);
+  assert.match(smoke, /enqueue-worker-run\.sh/);
+  assert.match(smoke, /fixtures\/worker-runs\/pdf-merge-seven-pdfs\.approved\.json/);
+  assert.match(smoke, /\.tmp\/pdf-merge-smoke-payload\.approved\.json/);
+  assert.match(smoke, /RAINCLOUD_WORKER_CALLBACK_SECRET/);
+  assert.match(smoke, /RAINCLOUD_WORKER_SMOKE_CALLBACK_URL/);
+  assert.match(enqueue, /raw secret/i);
 });

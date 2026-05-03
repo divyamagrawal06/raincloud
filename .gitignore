@@ -32,7 +32,7 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Local-only / generated (keep out of PRs; see AGENTS.md)
+# Local-only / generated (keep out of PRs)
 graphify-out/
-docs/diagrams/
+/docs/
 /scripts/
