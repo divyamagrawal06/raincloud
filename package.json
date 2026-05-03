@@ -10,6 +10,7 @@
     "build": "npm run build --workspaces --if-present",
     "test": "npm run build --workspaces --if-present && node --test tests/*.test.mjs",
     "typecheck": "npm run typecheck --workspaces --if-present",
+    "start:api": "node --env-file=.env apps/api/src/server.mjs",
     "start:mobile": "npm --workspace @raincloud/mobile run start",
     "android:mobile": "npm --workspace @raincloud/mobile run android",
     "ios:mobile": "npm --workspace @raincloud/mobile run ios",
