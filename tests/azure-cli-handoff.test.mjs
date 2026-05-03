@@ -109,6 +109,8 @@ test("Docker build context excludes local dependency and generated output folder
   assert.match(dockerignore, /^\*\*\/node_modules$/m);
   assert.match(dockerignore, /^\.tmp$/m);
   assert.match(dockerignore, /^graphify-out$/m);
+  assert.match(dockerignore, /^docs\/diagrams$/m);
+  assert.match(dockerignore, /^\/scripts$/m);
 });
 
 test("Azure smoke script seeds PDFs, enqueues the task, runs the job, and downloads the output", () => {
