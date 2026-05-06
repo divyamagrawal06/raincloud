@@ -36,3 +36,6 @@ Thumbs.db
 graphify-out/
 /docs/
 /scripts/
+.claude/
+.codex/
+.deepsec/
