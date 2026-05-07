@@ -28,6 +28,16 @@ import {
 } from "./store.mjs";
 
 const DEFAULT_PORT = 3000;
+const DEFAULT_NGROK_TUNNELS_URL = "http://127.0.0.1:4040/api/tunnels";
+const NGROK_DISCOVERY_TIMEOUT_MS = 800;
+
+const LOCAL_CALLBACK_HOSTNAMES = new Set([
+  "localhost",
+  "127.0.0.1",
+  "0.0.0.0",
+  "::1",
+  "[::1]",
+]);
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -50,6 +60,150 @@ const readRequestJson = async (request) => {
   }
   if (chunks.length === 0) return {};
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+};
+
+const createConfigError = (message) => {
+  const error = new Error(message);
+  error.statusCode = 400;
+  return error;
+};
+
+const trimTrailingSlashes = (value) => value.replace(/\/+$/, "");
+
+const parseCallbackBaseUrl = (value) => {
+  try {
+    return new URL(value);
+  } catch {
+    throw createConfigError(`RAINCLOUD_API_URL is not a valid URL: ${value}`);
+  }
+};
+
+const isLocalCallbackBaseUrl = (url) =>
+  LOCAL_CALLBACK_HOSTNAMES.has(url.hostname.toLowerCase());
+
+const isNgrokCallbackBaseUrl = (url) => {
+  const hostname = url.hostname.toLowerCase();
+  return (
+    hostname.endsWith(".ngrok-free.app") ||
+    hostname.endsWith(".ngrok.app") ||
+    hostname.endsWith(".ngrok.io")
+  );
+};
+
+const discoverNgrokCallbackBaseUrl = async ({
+  fetchImpl,
+  ngrokTunnelsUrl,
+  timeoutMs,
+}) => {
+  if (typeof fetchImpl !== "function") return null;
+
+  const controller =
+    typeof AbortController === "function" ? new AbortController() : null;
+  const timeout =
+    controller && Number.isFinite(timeoutMs)
+      ? setTimeout(() => controller.abort(), timeoutMs)
+      : null;
+
+  try {
+    const response = await fetchImpl(ngrokTunnelsUrl, {
+      signal: controller?.signal,
+    });
+    if (!response.ok || typeof response.json !== "function") return null;
+
+    const body = await response.json();
+    const tunnel = body?.tunnels?.find(
+      (candidate) =>
+        typeof candidate?.public_url === "string" &&
+        candidate.public_url.startsWith("https://"),
+    );
+
+    return tunnel ? trimTrailingSlashes(tunnel.public_url) : null;
+  } catch {
+    return null;
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+};
+
+const isCallbackHealthReachable = async ({ fetchImpl, baseUrl, timeoutMs }) => {
+  if (typeof fetchImpl !== "function") return false;
+
+  const controller =
+    typeof AbortController === "function" ? new AbortController() : null;
+  const timeout =
+    controller && Number.isFinite(timeoutMs)
+      ? setTimeout(() => controller.abort(), timeoutMs)
+      : null;
+
+  try {
+    const response = await fetchImpl(`${baseUrl}/health`, {
+      signal: controller?.signal,
+    });
+    return Boolean(response.ok);
+  } catch {
+    return false;
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+};
+
+export const resolveWorkerCallbackBaseUrl = async ({
+  env = process.env,
+  port = Number(env.RAINCLOUD_API_PORT) || DEFAULT_PORT,
+  fetchImpl = globalThis.fetch,
+  ngrokTunnelsUrl = env.RAINCLOUD_NGROK_TUNNELS_URL ?? DEFAULT_NGROK_TUNNELS_URL,
+  timeoutMs = NGROK_DISCOVERY_TIMEOUT_MS,
+} = {}) => {
+  const configuredValue =
+    env.RAINCLOUD_API_URL || `http://localhost:${port}`;
+  const configuredUrl = parseCallbackBaseUrl(configuredValue);
+  const configuredBaseUrl = trimTrailingSlashes(configuredUrl.href);
+  const isLocal = isLocalCallbackBaseUrl(configuredUrl);
+  const isNgrok = isNgrokCallbackBaseUrl(configuredUrl);
+
+  if (isLocal || isNgrok) {
+    const discoveredBaseUrl = await discoverNgrokCallbackBaseUrl({
+      fetchImpl,
+      ngrokTunnelsUrl,
+      timeoutMs,
+    });
+
+    if (discoveredBaseUrl) return discoveredBaseUrl;
+  }
+
+  if (isLocal) {
+    throw createConfigError(
+      `RAINCLOUD_API_URL is ${configuredBaseUrl}, but the Azure worker cannot call localhost. Start ngrok with "ngrok http ${port}" before approving a task, then set RAINCLOUD_API_URL to the HTTPS forwarding URL.`,
+    );
+  }
+
+  if (isNgrok) {
+    const isReachable = await isCallbackHealthReachable({
+      fetchImpl,
+      baseUrl: configuredBaseUrl,
+      timeoutMs,
+    });
+
+    if (isReachable) return configuredBaseUrl;
+
+    throw createConfigError(
+      `RAINCLOUD_API_URL points at ${configuredUrl.hostname}, but the local ngrok tunnel is not active. Start ngrok with "ngrok http ${port}" before approving a task so worker completion callbacks can reach this API.`,
+    );
+  }
+
+  const isReachable = await isCallbackHealthReachable({
+    fetchImpl,
+    baseUrl: configuredBaseUrl,
+    timeoutMs,
+  });
+
+  if (!isReachable) {
+    throw createConfigError(
+      `RAINCLOUD_API_URL is not reachable at ${configuredBaseUrl}/health. Start a public tunnel to port ${port} or update RAINCLOUD_API_URL before approving a task.`,
+    );
+  }
+
+  return configuredBaseUrl;
 };
 
 // ---- blob client (lazy, cached) ----
@@ -332,11 +486,15 @@ async function handleApprove(request, response) {
   };
 
   const runId = randomUUID();
-  const apiUrl =
-    process.env.RAINCLOUD_API_URL ??
-    `http://localhost:${process.env.RAINCLOUD_API_PORT ?? DEFAULT_PORT}`;
-  // TUNNEL REQUIRED for local E2E — worker runs in Azure Container Apps and cannot reach localhost.
-  // Set RAINCLOUD_API_URL to an ngrok/cloudflared tunnel URL for end-to-end testing.
+  let apiUrl;
+  try {
+    apiUrl = await resolveWorkerCallbackBaseUrl();
+  } catch (error) {
+    sendJson(response, error.statusCode ?? 500, {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return;
+  }
   const callbackUrl = `${apiUrl}/internal/worker-runs/${runId}/events`;
 
   const payload = createApprovedPdfMergeWorkerPayload({
