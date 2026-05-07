@@ -89,6 +89,7 @@ const postWorkerCallback = async ({ payload, event, env, fetchImpl }) => {
     headers: {
       "content-type": "application/json",
       authorization: `Bearer ${callbackSecret}`,
+      "ngrok-skip-browser-warning": "true",
     },
     body: JSON.stringify(event),
   });

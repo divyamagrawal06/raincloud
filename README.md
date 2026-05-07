@@ -58,7 +58,7 @@ AZURE_OUTPUTS_CONTAINER_NAME=outputs
 AZURE_STORAGE_QUEUE_NAME=approved-worker-runs
 OPENAI_API_KEY=<your key>
 RAINCLOUD_WORKER_CALLBACK_SECRET=<any secret string>
-RAINCLOUD_API_URL=https://xyz.ngrok-free.app   # fill in after step 4
+RAINCLOUD_API_URL=https://xyz.ngrok-free.app   # optional if ngrok is running locally
 ```
 
 ### 4. Start ngrok
@@ -68,6 +68,12 @@ ngrok http 3000
 ```
 
 Copy the `https://xyz.ngrok-free.app` URL into `RAINCLOUD_API_URL` in `.env`.
+If `.env` still says `http://localhost:3000`, the API will try to auto-detect
+the active ngrok tunnel from `http://127.0.0.1:4040` before queueing a worker
+run. Start ngrok before approving; otherwise approval fails fast instead of
+leaving the task stuck on `queued`.
+Any explicit public `RAINCLOUD_API_URL` must answer `GET /health`; stale tunnel
+URLs are rejected before the worker is queued.
 
 ### 5. Sync the callback secret to the worker
 

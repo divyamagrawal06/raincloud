@@ -248,6 +248,7 @@ test("worker posts artifact and success callbacks before deleting completed mess
   assert.equal(callbacks[0].method, "POST");
   assert.equal(callbacks[0].headers.authorization, "Bearer callback-secret");
   assert.equal(callbacks[0].headers["content-type"], "application/json");
+  assert.equal(callbacks[0].headers["ngrok-skip-browser-warning"], "true");
   assert.equal(callbacks[0].body.artifact.sizeBytes, result.artifact.sizeBytes);
   assert.deepEqual(callbacks[1].body.artifactIds, [
     callbacks[0].body.artifact.id,
@@ -302,6 +303,7 @@ test("worker posts failure callbacks before deleting failed messages", async () 
   assert.equal(callbacks[0].url, approvedPayload.callback.url);
   assert.equal(callbacks[0].method, "POST");
   assert.equal(callbacks[0].headers.authorization, "Bearer callback-secret");
+  assert.equal(callbacks[0].headers["ngrok-skip-browser-warning"], "true");
   assert.equal(callbacks[0].body.kind, "run_failed");
   assert.match(callbacks[0].body.failureReason, /missing input blob/i);
   assert.deepEqual(deletedMessages, [
