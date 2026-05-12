@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#10131b" />
+    <title>Raincloud — Mobile-first AI task platform</title>
+    <meta
+      name="description"
+      content="Describe a job from your phone. Review the plan. Approve. Come back to a finished artifact. No laptop required."
+    />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23adc6ff' d='M17.5 19h-11C3.5 19 1 16.5 1 13.5S3.5 8 6.5 8h.1A6.5 6.5 0 0 1 19 9.2 4.5 4.5 0 0 1 17.5 19Z'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="nav">
+      <a class="nav__brand" href="#top" aria-label="Raincloud home">
+        <svg class="nav__logo" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M17.5 19h-11C3.5 19 1 16.5 1 13.5S3.5 8 6.5 8h.1A6.5 6.5 0 0 1 19 9.2 4.5 4.5 0 0 1 17.5 19Z"
+            fill="currentColor"
+          />
+        </svg>
+        <span>Raincloud</span>
+      </a>
+      <nav class="nav__links" aria-label="Primary">
+        <a href="#how">How it works</a>
+        <a href="#stack">Stack</a>
+        <a href="https://github.com/divyamagrawal06/raincloud" rel="noopener">GitHub</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <svg class="hero__icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M17.5 19h-11C3.5 19 1 16.5 1 13.5S3.5 8 6.5 8h.1A6.5 6.5 0 0 1 19 9.2 4.5 4.5 0 0 1 17.5 19Z"
+            fill="currentColor"
+          />
+        </svg>
+        <h1 class="hero__title">Raincloud</h1>
+        <p class="hero__tagline">Mobile-first AI task platform.</p>
+        <p class="hero__lede">
+          Describe a job from your phone, review the plan, approve it, and come back
+          to a finished artifact. No laptop or desktop required.
+        </p>
+        <div class="hero__cta">
+          <a class="btn btn--primary" href="https://github.com/divyamagrawal06/raincloud" rel="noopener">
+            View on GitHub
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+            </svg>
+          </a>
+          <a class="btn btn--ghost" href="#how">See how it works</a>
+        </div>
+      </section>
+
+      <section id="how" class="section">
+        <p class="eyebrow">How it works</p>
+        <h2 class="section__title">Four steps, phone only.</h2>
+
+        <ol class="steps">
+          <li class="card step">
+            <span class="step__num">01</span>
+            <h3 class="step__title">Attach &amp; describe</h3>
+            <p class="step__body">
+              Drop in files and a simple natural-language prompt from your phone.
+            </p>
+          </li>
+          <li class="card step">
+            <span class="step__num">02</span>
+            <h3 class="step__title">Review the plan</h3>
+            <p class="step__body">
+              The API generates an ordered file list, assumptions, steps, and
+              estimated cost. Reorder or refine before approving.
+            </p>
+          </li>
+          <li class="card step">
+            <span class="step__num">03</span>
+            <h3 class="step__title">Approve</h3>
+            <p class="step__body">
+              On approval, the plan is enqueued as a worker job on Azure Container
+              Apps. Nothing expensive runs without your sign-off.
+            </p>
+          </li>
+          <li class="card step">
+            <span class="step__num">04</span>
+            <h3 class="step__title">Poll &amp; download</h3>
+            <p class="step__body">
+              The app polls every few seconds. When the worker finishes, tap
+              Download to open the finished artifact.
+            </p>
+          </li>
+        </ol>
+      </section>
+
+      <section id="stack" class="section">
+        <p class="eyebrow">Stack</p>
+        <h2 class="section__title">Built on a small, sharp set of tools.</h2>
+
+        <div class="stack">
+          <div class="card stack__row">
+            <span class="stack__layer">Mobile</span>
+            <span class="stack__tech">React Native &middot; Expo SDK 54</span>
+          </div>
+          <div class="card stack__row">
+            <span class="stack__layer">API</span>
+            <span class="stack__tech">Node.js &middot; Azure Blob &middot; Azure Queue</span>
+          </div>
+          <div class="card stack__row">
+            <span class="stack__layer">Planner</span>
+            <span class="stack__tech">OpenAI</span>
+          </div>
+          <div class="card stack__row">
+            <span class="stack__layer">Worker</span>
+            <span class="stack__tech">Azure Container Apps Job</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section--cta">
+        <div class="cta card">
+          <div>
+            <h2 class="cta__title">Ship from your phone.</h2>
+            <p class="cta__body">
+              Open the repo for setup, architecture notes, and the latest worker
+              callback flow.
+            </p>
+          </div>
+          <a class="btn btn--primary" href="https://github.com/divyamagrawal06/raincloud" rel="noopener">
+            Get started
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Raincloud</span>
+      <span class="footer__sep" aria-hidden="true">&middot;</span>
+      <a href="https://github.com/divyamagrawal06/raincloud" rel="noopener">Source</a>
+    </footer>
+  </body>
+</html>
